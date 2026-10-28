@@ -1,0 +1,25 @@
+{
+  "product": "vpa",
+  "service": "vending-app",
+  "type": "Monolithic",
+  "componentPrefix": "vpa",
+  "template": "angular-monolith",
+  "forge": {
+    "version": "1.0.0+f6a5329929c8d809073edc27f0eaee5358fb51b9",
+    "build": "f6a5329929c8d809073edc27f0eaee5358fb51b9"
+  },
+  "printedAt": "2026-10-28T19:06:06.4897827Z",
+  "platforms": [
+  ],
+  "canvasModules": [
+    "Workspace",
+    "Shell",
+    "Layout",
+    "Navigation",
+    "Auth",
+    "Settings",
+    "Profile",
+    "Notifications",
+    "Search"
+  ]
+}

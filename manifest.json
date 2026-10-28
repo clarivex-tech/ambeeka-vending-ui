@@ -1,0 +1,8 @@
+{
+  "product": "vpa",
+  "verticalSlug": "vending",
+  "serviceName": "vending-app",
+  "serviceType": "Monolithic",
+  "componentPrefix": "vpa",
+  "uiTargets": []
+}

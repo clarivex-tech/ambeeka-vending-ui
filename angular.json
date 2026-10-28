@@ -1,0 +1,112 @@
+{
+  "$schema": "./node_modules/@angular/cli/lib/config/schema.json",
+  "version": 1,
+  "newProjectRoot": "apps",
+  "projects": {
+    "vending-app": {
+      "projectType": "application",
+      "root": "apps/vending-app",
+      "sourceRoot": "apps/vending-app/src",
+      "prefix": "vpa",
+      "architect": {
+        "build": {
+          "builder": "@angular-devkit/build-angular:application",
+          "options": {
+            "outputPath": "dist/vending-app",
+            "index": "apps/vending-app/src/index.html",
+            "browser": "apps/vending-app/src/main.ts",
+            "polyfills": ["zone.js"],
+            "tsConfig": "apps/vending-app/tsconfig.app.json",
+            "inlineStyleLanguage": "scss",
+            "assets": [
+              {
+                "glob": "**/*",
+                "input": "apps/vending-app/src/assets",
+                "output": "assets"
+              }
+            ],
+            "styles": ["apps/vending-app/src/styles.scss"],
+            "scripts": []
+          },
+          "configurations": {
+            "production": {
+              "optimization": true,
+              "extractLicenses": true,
+              "sourceMap": false,
+              "outputHashing": "all",
+              "namedChunks": false,
+              "budgets": [
+                {
+                  "type": "initial",
+
+                  "maximumWarning": "1MB",
+                  "maximumError": "2MB"
+
+                },
+                {
+                  "type": "anyComponentStyle",
+                  "maximumWarning": "4kB",
+                  "maximumError": "8kB"
+                }
+              ],
+              "fileReplacements": [
+                {
+                  "replace": "apps/vending-app/src/environments/environment.ts",
+                  "with": "apps/vending-app/src/environments/environment.prod.ts"
+                }
+              ]
+            },
+            "development": {
+              "optimization": false,
+              "extractLicenses": false,
+              "sourceMap": true
+            }
+          },
+          "defaultConfiguration": "production"
+        },
+        "serve": {
+          "builder": "@angular-devkit/build-angular:dev-server",
+          "options": {
+            "buildTarget": "vending-app:build:development"
+          },
+          "configurations": {
+            "production": {
+              "buildTarget": "vending-app:build:production"
+            },
+            "development": {
+              "buildTarget": "vending-app:build:development"
+            }
+          },
+          "defaultConfiguration": "development"
+        },
+        "test": {
+          "builder": "@angular-devkit/build-angular:karma",
+          "options": {
+            "polyfills": ["zone.js", "zone.js/testing"],
+            "tsConfig": "apps/vending-app/tsconfig.spec.json",
+            "karmaConfig": "apps/vending-app/karma.conf.js",
+            "inlineStyleLanguage": "scss",
+            "assets": [
+              {
+                "glob": "**/*",
+                "input": "apps/vending-app/src/assets",
+                "output": "assets"
+              }
+            ],
+            "styles": ["apps/vending-app/src/styles.scss"],
+            "scripts": []
+          }
+        },
+        "lint": {
+          "builder": "@angular-eslint/builder:lint",
+          "options": {
+            "lintFilePatterns": [
+              "apps/vending-app/src/**/*.ts",
+              "apps/vending-app/src/**/*.html"
+            ]
+          }
+        }
+      }
+    }
+  }
+}
