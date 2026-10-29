@@ -30,6 +30,10 @@
           },
           "configurations": {
             "production": {
+              "index": {
+                "input": "apps/vending-app/src/index.prod.html",
+                "output": "index.html"
+              },
               "optimization": true,
               "extractLicenses": true,
               "sourceMap": false,

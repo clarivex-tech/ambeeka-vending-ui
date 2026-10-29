@@ -32,6 +32,13 @@ import { authGuard } from './core/guards/auth.guard';
  */
 export const appRoutes: Routes = [
   {
+    path: 'auth/callback',
+    loadComponent: () =>
+      import('./features/login/auth-callback.component').then(
+        (m) => m.AuthCallbackComponent
+      ),
+  },
+  {
     path: 'login',
     loadComponent: () =>
       import('./features/login/login.component').then(

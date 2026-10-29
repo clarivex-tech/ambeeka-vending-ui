@@ -19,4 +19,11 @@
 export const environment = {
   production: false,
   apiUrl: 'http://localhost:3000',
+  cognito: {
+    region: 'us-east-1',
+    userPoolId: 'us-east-1_FJU1dsYdU',
+    domain: 'https://us-east-1fju1dsydu.auth.us-east-1.amazoncognito.com',
+    clientId: '3g9i1vqvvdbrcb7v2s3cgchsdj',
+    scopes: ['openid', 'email', 'phone'],
+  },
 };

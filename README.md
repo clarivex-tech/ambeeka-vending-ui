@@ -203,14 +203,22 @@ correlationInterceptor → authInterceptor → retryInterceptor → loadingInter
 
 ### Authentication (`AuthService`)
 
+- Cognito hosted UI authorization-code login with PKCE
+- OAuth `state` and OIDC `nonce` are checked on the callback; PKCE verifier is kept in `sessionStorage`
 - Tokens stored in `sessionStorage` (clears on tab close)
-- `isAuthenticated` — computed Signal, checks token expiry
-- `accessToken` — computed Signal, null if not authenticated
-- `setTokens(tokens)` — call this after successful IdP login
-- `logout()` — clears storage, navigates to `/login`
-- `refreshToken()` — **stub, needs your IdP implementation**
-- `hasPermission(permission)` — **stub, needs JWT claims decoding**
+- `isAuthenticated` - computed Signal, checks token expiry
+- `accessToken` - computed Signal, null if not authenticated
+- API requests receive Cognito's `access_token` as `Authorization: Bearer <token>`; the ID token is never used for API authorization
+- `logout()` - clears storage, navigates to `/login`
+- `refreshToken()` - exchanges the Cognito refresh token for a new access token
+- `hasPermission(permission)` - stub, needs JWT claims decoding
 
+#### Cognito configuration
+
+Both environment files are configured for the AmbeekaVending user pool in `us-east-1` and its app client. The SPA uses a public app client with authorization-code grant and PKCE; do not put a client secret in the frontend. Register `<app-origin>/auth/callback` as an allowed callback URL in Cognito. The configured scopes are `openid`, `email`, and `phone`, matching the app client's current allowed scopes. Add `profile` in Cognito and to the scope list only if the UI needs profile attributes such as a name.
+
+
+The API must validate Cognito access tokens, including the signature, issuer, expiry, app client ID, and `token_use: access`. AWS recommends validating Cognito JWTs with `aws-jwt-verify` for Node.js APIs; see [AWS Cognito JWT verification guidance](https://docs.aws.amazon.com/cognito/latest/developerguide/amazon-cognito-user-pools-using-tokens-verifying-a-jwt.html).
 ### Cross-Tab Auth Sync (`AuthSyncService`)
 
 Uses `BroadcastChannel` — when a user logs out in one browser tab, all other open tabs log out automatically. No setup needed; initialized in `AppComponent`.
@@ -420,6 +428,27 @@ Install deps → Lint → Test (with coverage) → Production build
 ```
 
 All three gates must pass for a PR to merge.
+
+### CloudFront production deployment
+
+The CI workflow can deploy the production build from `main` to a private S3 bucket behind CloudFront. Deployment runs only after the CI build succeeds and only when the repository variable `CLOUDFRONT_DEPLOY_ENABLED` is set to `true`. A manual `workflow_dispatch` on `main` uses the same gate.
+
+Create a GitHub environment named `production` and add these environment variables:
+
+| Variable | Value |
+|----------|-------|
+| `AWS_DEPLOY_ROLE_ARN` | ARN of the GitHub OIDC deploy role |
+| `AWS_REGION` | Region containing the S3 bucket, for example `us-east-1` |
+| `S3_BUCKET` | Private bucket name used as the CloudFront origin |
+| `CLOUDFRONT_DISTRIBUTION_ID` | CloudFront distribution ID |
+
+Set `CLOUDFRONT_DEPLOY_ENABLED=true` as a repository variable after AWS and GitHub configuration is complete. Restrict the `production` environment to the `main` branch and add required reviewers if the repository plan supports them.
+
+In AWS, use a dedicated private S3 bucket with Block Public Access enabled and a CloudFront origin access control (OAC). Configure the distribution's default root object as `index.html`, redirect viewers to HTTPS, and route SPA paths such as `/auth/callback` back to `/index.html` (for an S3 REST origin, configure 403 and 404 custom responses to `/index.html` with response code 200). The workflow syncs the Angular output with `--delete` and invalidates `/*` after each deployment.
+
+Configure IAM GitHub OIDC federation for `token.actions.githubusercontent.com` with audience `sts.amazonaws.com`. The deploy role trust policy should be limited to this repository's `production` environment. Give the role only `s3:ListBucket` and `s3:GetBucketLocation` on the deployment bucket, `s3:PutObject` and `s3:DeleteObject` on its objects, and `cloudfront:CreateInvalidation` on this distribution. The workflow uses short-lived OIDC credentials; it does not need stored AWS access keys.
+
+After CloudFront creates the distribution, register `https://<distribution-domain>/auth/callback` as an allowed Cognito callback URL. The current production build uses the configured AmbeekaVending app client, so the URL can be added to that client for this POC. The app currently calls the API at `/api`; configure a CloudFront `/api/*` behavior when the production API is ready. Production builds use `index.prod.html`, whose CSP allows Cognito and same-origin `/api` traffic without allowing the local development API.
 
 ---
 

@@ -1,50 +1,22 @@
 import { Component, inject } from '@angular/core';
+import { ActivatedRoute } from '@angular/router';
+import { AuthService } from '../../core/services/auth.service';
 
-import { Router } from '@angular/router';
-
-import { FormsModule } from '@angular/forms';
-import { AuthService, AuthTokens } from '../../core/services/auth.service';
-
-/**
- * VERTICAL: Replace this placeholder login with your identity provider integration.
- * This component demonstrates the AuthService contract — call setTokens() after
- * successful authentication from your IdP (Cognito, Auth0, Azure AD, etc.).
- */
 @Component({
   selector: 'vpa-login',
   standalone: true,
-  imports: [FormsModule],
   template: `
     <div class="login-container">
       <div class="login-card">
         <h1>vending-app</h1>
         <p class="login-subtitle">Sign in to continue</p>
 
-        <form (ngSubmit)="onLogin()">
-          <div class="form-group">
-            <label for="username">Username</label>
-            <input
-              id="username"
-              type="text"
-              [(ngModel)]="username"
-              name="username"
-              required
-              autocomplete="username"
-            />
-          </div>
-          <div class="form-group">
-            <label for="password">Password</label>
-            <input
-              id="password"
-              type="password"
-              [(ngModel)]="password"
-              name="password"
-              required
-              autocomplete="current-password"
-            />
-          </div>
-          <button type="submit" class="btn-primary">Sign In</button>
-        </form>
+        @if (errorMessage) {
+          <p class="login-error" role="alert">{{ errorMessage }}</p>
+        }
+        <button type="button" class="btn-primary" (click)="onLogin()">
+          Continue with AmbeekaVending
+        </button>
       </div>
     </div>
   `,
@@ -66,16 +38,7 @@ import { AuthService, AuthTokens } from '../../core/services/auth.service';
     }
     h1 { margin-bottom: var(--spacing-xs); }
     .login-subtitle { color: var(--color-secondary); margin-bottom: var(--spacing-xl); }
-    .form-group { margin-bottom: var(--spacing-md); }
-    label { display: block; margin-bottom: var(--spacing-xs); font-weight: 500; }
-    input {
-      width: 100%;
-      padding: var(--spacing-sm) var(--spacing-md);
-      border: 1px solid #e2e8f0;
-      border-radius: var(--radius-md);
-      font-size: 1rem;
-    }
-    input:focus { outline: 2px solid var(--color-primary); border-color: transparent; }
+    .login-error { color: #b91c1c; margin-bottom: var(--spacing-md); }
     .btn-primary {
       width: 100%;
       padding: var(--spacing-sm) var(--spacing-md);
@@ -93,25 +56,23 @@ import { AuthService, AuthTokens } from '../../core/services/auth.service';
 })
 export class LoginComponent {
   private readonly auth = inject(AuthService);
+  private readonly route = inject(ActivatedRoute);
+  errorMessage = '';
 
-  private readonly router = inject(Router);
+  constructor() {
+    if (this.route.snapshot.queryParamMap.has('authError')) {
+      this.errorMessage = 'Sign-in could not be completed. Please try again.';
+    } else if (!this.auth.isCognitoConfigured) {
+      this.errorMessage = 'Cognito sign-in is not configured for this environment.';
+    }
+  }
 
-
-  username = '';
-  password = '';
-
-  onLogin(): void {
-    // VERTICAL: Replace this mock with your actual IdP authentication call.
-    // After successful auth, call this.auth.setTokens() with real tokens.
-    const mockTokens: AuthTokens = {
-      accessToken: 'mock-access-token',
-      refreshToken: 'mock-refresh-token',
-      expiresAt: Date.now() + 3600000, // 1 hour
-    };
-
-    this.auth.setTokens(mockTokens);
-
-    this.router.navigate(['/dashboard']);
-
+  async onLogin(): Promise<void> {
+    this.errorMessage = '';
+    try {
+      await this.auth.beginLogin();
+    } catch {
+      this.errorMessage = 'Unable to start Cognito sign-in. Check the app configuration and try again.';
+    }
   }
 }
