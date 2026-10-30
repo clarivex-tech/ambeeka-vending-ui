@@ -64,7 +64,7 @@ export const appRoutes: Routes = [
 
   {
     path: 'admin',
-    canActivate: [permissionGuard('Admin')],
+    canActivate: [authGuard, permissionGuard('Admin')],
     loadChildren: () =>
       import('./features/admin/admin.routes').then((m) => m.ADMIN_ROUTES),
   },
