@@ -1,0 +1,58 @@
+.pricing-page {
+  display: grid;
+  gap: var(--spacing-md, 1rem);
+}
+
+.pricing-page__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--spacing-md, 1rem);
+}
+
+.pricing-page__header h2 {
+  margin: 0;
+  color: var(--color-text, #222);
+}
+
+.pricing-page__header p {
+  margin: var(--spacing-xs, 0.25rem) 0 0;
+  color: var(--color-text-muted, #666);
+}
+
+.pricing-page__actions-heading {
+  text-align: right;
+}
+
+.pricing-page__actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--spacing-xs, 0.25rem);
+}
+
+.pricing-page__product-id {
+  font-family: var(--font-family-mono, monospace);
+  white-space: nowrap;
+}
+
+.pricing-state {
+  padding: var(--spacing-lg, 1.5rem);
+  color: var(--color-text-muted, #666);
+  text-align: center;
+}
+
+.pricing-state--error {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--spacing-md, 1rem);
+  border: 1px solid var(--color-error, #b91c1c);
+  border-radius: var(--radius-md, 8px);
+  color: var(--color-error, #b91c1c);
+}
+
+@media (max-width: 700px) {
+  .pricing-page__header {
+    align-items: flex-start;
+  }
+}

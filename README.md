@@ -148,8 +148,9 @@ vending-app/
 │           │   │       └── route-loading.service.ts # Loading bar during route transitions
 │           │   ├── features/                # Your code lives here
 │           │   │   ├── _reference/          # Copy-paste template for new features
+│           │   │   ├── admin/               # Admin area, including Pricing CRUD
 │           │   │   ├── dashboard/           # Placeholder dashboard (replace me)
-│           │   │   ├── login/               # Auth placeholder (wire up your IdP)
+│           │   │   ├── login/               # Cognito hosted UI login and callback
 │           │   │   └── not-found/           # 404 page
 │           │   ├── shared/                  # Reusable cross-feature code
 │           │   │   ├── components/
@@ -167,7 +168,7 @@ vending-app/
 │           │   └── app.routes.ts            # Root route definitions
 │           ├── environments/
 │           │   ├── environment.ts           # Dev: apiUrl = http://localhost:3000
-│           │   └── environment.prod.ts      # Prod: apiUrl = /api
+│           │   └── environment.prod.ts      # Prod: vending-api.clarivex.io
 │           ├── index.html                   # CSP meta tag, vpa-root host
 │           ├── main.ts                      # bootstrapApplication entry
 │           └── styles.scss                  # Global reset + design tokens
@@ -211,7 +212,7 @@ correlationInterceptor → authInterceptor → retryInterceptor → loadingInter
 - API requests receive Cognito's `access_token` as `Authorization: Bearer <token>`; the ID token is never used for API authorization
 - `logout()` - clears storage, navigates to `/login`
 - `refreshToken()` - exchanges the Cognito refresh token for a new access token
-- `hasPermission(permission)` - stub, needs JWT claims decoding
+- `hasPermission(permission)` - checks the Cognito `cognito:groups` claim for UI route gating; the API remains authoritative for access control
 
 #### Cognito configuration
 
@@ -372,9 +373,9 @@ PrimeNG dark mode is toggled by adding the `.dark-mode` class to the document ro
 | File | Used when | `apiUrl` |
 |------|-----------|----------|
 | `environment.ts` | `ng serve` (development) | `http://localhost:3000` |
-| `environment.prod.ts` | `ng build --configuration production` | `/api` |
+| `environment.prod.ts` | `ng build --configuration production` | `https://vending-api.clarivex.io` |
 
-**To point production at a real backend**, update `apiUrl` in `environment.prod.ts`. This is the only change needed — the `authInterceptor` and `ApiService` pick it up automatically.
+Production browser requests go directly to the vending API. The API must allow the deployed UI origin in CORS; the current production allowlist includes `https://d2e3j8o6cbk70g.cloudfront.net`. The production Content Security Policy also allows connections to the API host.
 
 ---
 
@@ -476,16 +477,11 @@ The original scaffold was missing `typescript-eslint` and `angular-eslint` from 
 
 ## What Still Needs Wiring Up
 
-These are intentional stubs — the scaffold sets the contract, your team implements the integration.
+These are the remaining integration items.
 
 | What | File | Notes |
 |------|------|-------|
-| IdP Login | `features/login/login.component.ts` | Replace mock tokens with Cognito / Auth0 / Azure AD call |
-| Token Refresh | `core/services/auth.service.ts` → `refreshToken()` | Call your IdP's token refresh endpoint |
-| Permission Claims | `core/services/auth.service.ts` → `hasPermission()` | Decode JWT claims / check roles from IdP |
 | Error Reporting | `core/services/error-reporter.ts` → `report()` | Add Sentry, Datadog RUM, or CloudWatch |
-| Production API URL | `environments/environment.prod.ts` | Set `apiUrl` to your actual backend |
-| Navigation | `app.component.ts` → `menuItems` | Add sidebar links as you build features |
 
 ---
 

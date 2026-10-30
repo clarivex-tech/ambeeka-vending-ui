@@ -18,6 +18,7 @@
 
 import { Routes } from '@angular/router';
 import { authGuard } from './core/guards/auth.guard';
+import { permissionGuard } from './core/guards/permission.guard';
 
 /**
  * Application routes.
@@ -60,6 +61,13 @@ export const appRoutes: Routes = [
   },
 
   // --- VERTICAL: Add your feature routes here ---
+
+  {
+    path: 'admin',
+    canActivate: [permissionGuard('Admin')],
+    loadChildren: () =>
+      import('./features/admin/admin.routes').then((m) => m.ADMIN_ROUTES),
+  },
 
   {
     path: 'not-found',

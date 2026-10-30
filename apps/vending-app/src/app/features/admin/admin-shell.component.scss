@@ -1,0 +1,37 @@
+.admin-area {
+  display: grid;
+  gap: var(--spacing-md, 1rem);
+}
+
+.admin-area__header h1 {
+  margin: 0;
+  color: var(--color-text, #222);
+}
+
+.admin-area__eyebrow {
+  margin: 0 0 var(--spacing-xs, 0.25rem);
+  color: var(--color-text-muted, #666);
+  font-size: 0.8rem;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.admin-area__nav {
+  display: flex;
+  gap: var(--spacing-md, 1rem);
+  border-bottom: 1px solid var(--color-border, #ddd);
+}
+
+.admin-area__nav a {
+  padding: var(--spacing-sm, 0.5rem) var(--spacing-xs, 0.25rem);
+  border-bottom: 2px solid transparent;
+  color: var(--color-text-muted, #666);
+  text-decoration: none;
+}
+
+.admin-area__nav a.active {
+  border-bottom-color: var(--color-primary, #2563eb);
+  color: var(--color-primary, #2563eb);
+  font-weight: 600;
+}

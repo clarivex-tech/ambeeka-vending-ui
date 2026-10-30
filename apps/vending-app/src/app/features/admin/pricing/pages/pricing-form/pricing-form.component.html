@@ -1,0 +1,118 @@
+<section class="pricing-form-page">
+  <header class="pricing-form-page__header">
+    <div>
+      <a routerLink="/admin/pricing" class="pricing-form-page__back">← Pricing</a>
+      <h2>{{ isEditMode ? 'Edit pricing' : 'Add pricing' }}</h2>
+      <p>Enter the system product details and vending price.</p>
+    </div>
+  </header>
+
+  @if (pageError(); as errorMessage) {
+    <div class="form-error" role="alert" [textContent]="errorMessage"></div>
+  } @else {
+    <form class="pricing-form" [formGroup]="form" (ngSubmit)="submit()" novalidate>
+      @if (saveError(); as errorMessage) {
+        <div class="form-error" role="alert" [textContent]="errorMessage"></div>
+      }
+
+      <div class="pricing-form__grid">
+        <div class="form-field">
+          <label for="systemProductId">System product ID</label>
+          <input
+            id="systemProductId"
+            pInputText
+            formControlName="systemProductId"
+            maxlength="64"
+            autocomplete="off"
+          />
+          @if (controlInvalid('systemProductId')) {
+            <small class="form-field__error">
+              @if (form.controls.systemProductId.hasError('required')) {
+                System product ID is required.
+              } @else {
+                Maximum length is 64 characters.
+              }
+            </small>
+          }
+        </div>
+
+        <div class="form-field">
+          <label for="systemProductName">System product name</label>
+          <input
+            id="systemProductName"
+            pInputText
+            formControlName="systemProductName"
+            maxlength="255"
+            autocomplete="off"
+          />
+          @if (controlInvalid('systemProductName')) {
+            <small class="form-field__error">
+              @if (form.controls.systemProductName.hasError('required')) {
+                System product name is required.
+              } @else {
+                Maximum length is 255 characters.
+              }
+            </small>
+          }
+        </div>
+
+        <div class="form-field">
+          <label for="productName">Product name</label>
+          <input
+            id="productName"
+            pInputText
+            formControlName="productName"
+            maxlength="255"
+            autocomplete="off"
+          />
+          @if (controlInvalid('productName')) {
+            <small class="form-field__error">
+              @if (form.controls.productName.hasError('required')) {
+                Product name is required.
+              } @else {
+                Maximum length is 255 characters.
+              }
+            </small>
+          }
+        </div>
+
+        <div class="form-field">
+          <label for="vendPrice">Vend price</label>
+          <p-inputnumber
+            inputId="vendPrice"
+            formControlName="vendPrice"
+            mode="currency"
+            currency="USD"
+            locale="en-US"
+            [min]="0.01"
+            [max]="1000000"
+            [minFractionDigits]="2"
+            [maxFractionDigits]="2"
+          />
+          @if (controlInvalid('vendPrice')) {
+            <small class="form-field__error">
+              Vend price must be between $0.01 and $1,000,000.00.
+            </small>
+          }
+        </div>
+      </div>
+
+      <footer class="pricing-form__actions">
+        <p-button
+          label="Cancel"
+          severity="secondary"
+          [outlined]="true"
+          [disabled]="saving()"
+          (onClick)="cancel()"
+        />
+        <p-button
+          [label]="isEditMode ? 'Save changes' : 'Create pricing'"
+          icon="pi pi-check"
+          type="submit"
+          [loading]="saving()"
+          [disabled]="loading()"
+        />
+      </footer>
+    </form>
+  }
+</section>

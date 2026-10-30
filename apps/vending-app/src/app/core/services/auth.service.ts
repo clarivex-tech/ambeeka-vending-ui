@@ -178,8 +178,11 @@ export class AuthService {
   }
 
   hasPermission(permission: string): boolean {
-    void permission;
-    return this.isAuthenticated();
+    const accessToken = this.accessToken();
+    if (!this.isAuthenticated() || !accessToken) return false;
+
+    const groups = this.readJwtClaim(accessToken, 'cognito:groups');
+    return Array.isArray(groups) && groups.includes(permission);
   }
 
   private loadTokens(): void {

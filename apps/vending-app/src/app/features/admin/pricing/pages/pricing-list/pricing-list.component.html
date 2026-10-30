@@ -1,0 +1,72 @@
+<section class="pricing-page">
+  <header class="pricing-page__header">
+    <div>
+      <h2>Pricing</h2>
+      <p>Manage vending prices and product names.</p>
+    </div>
+    <p-button
+      label="Add pricing"
+      icon="pi pi-plus"
+      routerLink="/admin/pricing/new"
+    />
+  </header>
+
+  @if (error(); as errorMessage) {
+    <div class="pricing-state pricing-state--error" role="alert">
+      <span [textContent]="errorMessage"></span>
+      <p-button label="Retry" severity="secondary" (onClick)="loadItems()" />
+    </div>
+  } @else {
+    <p-table
+      [value]="items()"
+      [loading]="loading()"
+      dataKey="id"
+      [tableStyle]="{ 'min-width': '68rem' }"
+    >
+      <ng-template #header>
+        <tr>
+          <th scope="col">System product ID</th>
+          <th scope="col">System product name</th>
+          <th scope="col">Product name</th>
+          <th scope="col">Vend price</th>
+          <th scope="col">Last updated</th>
+          <th scope="col" class="pricing-page__actions-heading">Actions</th>
+        </tr>
+      </ng-template>
+      <ng-template #body let-item>
+        <tr>
+          <td class="pricing-page__product-id" [textContent]="item.systemProductId"></td>
+          <td [textContent]="item.systemProductName"></td>
+          <td [textContent]="item.productName"></td>
+          <td>{{ item.vendPrice | currency: 'USD' }}</td>
+          <td>{{ item.updatedAt | date: 'mediumDate' }}</td>
+          <td class="pricing-page__actions">
+            <p-button
+              icon="pi pi-pencil"
+              severity="secondary"
+              [text]="true"
+              [routerLink]="['/admin/pricing', item.id, 'edit']"
+              [ariaLabel]="'Edit ' + item.productName"
+            />
+            <p-button
+              icon="pi pi-trash"
+              severity="danger"
+              [text]="true"
+              [loading]="deletingId() === item.id"
+              [disabled]="deletingId() !== null"
+              [ariaLabel]="'Delete ' + item.productName"
+              (onClick)="deleteItem(item)"
+            />
+          </td>
+        </tr>
+      </ng-template>
+      <ng-template #emptymessage>
+        <tr>
+          <td colspan="6" class="pricing-state">
+            No pricing items found. Add a pricing item to get started.
+          </td>
+        </tr>
+      </ng-template>
+    </p-table>
+  }
+</section>

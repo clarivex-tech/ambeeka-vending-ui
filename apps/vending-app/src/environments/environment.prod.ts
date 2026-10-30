@@ -18,7 +18,7 @@
 
 export const environment = {
   production: true,
-  apiUrl: '/api',
+  apiUrl: 'https://vending-api.clarivex.io',
   cognito: {
     region: 'us-east-1',
     userPoolId: 'us-east-1_FJU1dsYdU',

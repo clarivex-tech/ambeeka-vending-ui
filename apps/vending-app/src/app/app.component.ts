@@ -32,6 +32,7 @@ import { RouteLoadingService } from './core/services/route-loading.service';
 import { InactivityService } from './core/services/inactivity.service';
 
 import { AuthSyncService } from './core/services/auth-sync.service';
+import { AuthService } from './core/services/auth.service';
 
 
 /**
@@ -67,13 +68,22 @@ export class AppComponent {
   private readonly inactivity = inject(InactivityService);
 
   private readonly authSync = inject(AuthSyncService);
+  private readonly auth = inject(AuthService);
 
 
   sidebarCollapsed = false;
 
-  menuItems = [
-    { label: 'Dashboard', icon: 'pi pi-home', routerLink: '/dashboard' },
-  ];
+  get menuItems() {
+    const items = [
+      { label: 'Dashboard', icon: 'pi pi-home', routerLink: '/dashboard' },
+    ];
+
+    if (this.auth.hasPermission('Admin')) {
+      items.push({ label: 'Pricing', icon: 'pi pi-tag', routerLink: '/admin/pricing' });
+    }
+
+    return items;
+  }
 
   toggleSidebar(): void {
     this.sidebarCollapsed = !this.sidebarCollapsed;
