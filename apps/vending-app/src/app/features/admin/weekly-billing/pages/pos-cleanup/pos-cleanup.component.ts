@@ -64,7 +64,7 @@ export class PosCleanupComponent implements OnInit {
       && this.confirmation() === this.expectedPhrase();
   }
 
-  countEntries(counts: PosBillingCleanupCounts | null | undefined): Array<{ label: string; value: number }> {
+  countEntries(counts: PosBillingCleanupCounts | null | undefined): { label: string; value: number }[] {
     return [
       { label: 'Calculations', value: counts?.calculations ?? 0 },
       { label: 'Calculation import links', value: counts?.calculationImportLinks ?? 0 },
