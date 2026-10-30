@@ -32,7 +32,7 @@ export class ImportProcessingComponent {
   readonly error = signal<string | null>(null);
   readonly fileError = signal<string | null>(null);
 
-  rowCountEntries(): Array<[string, number]> {
+  rowCountEntries(): [string, number][] {
     return Object.entries(this.validation()?.rowCounts ?? {});
   }
 
