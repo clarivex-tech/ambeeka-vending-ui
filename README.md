@@ -167,7 +167,7 @@ vending-app/
 │           │   ├── app.config.ts            # Providers: router, HTTP, PrimeNG, ErrorHandler
 │           │   └── app.routes.ts            # Root route definitions
 │           ├── environments/
-│           │   ├── environment.ts           # Dev: apiUrl = http://localhost:3000
+│           │   ├── environment.ts           # Dev: apiUrl = http://localhost:5081
 │           │   └── environment.prod.ts      # Prod: vending-api.clarivex.io
 │           ├── index.html                   # CSP meta tag, vpa-root host
 │           ├── main.ts                      # bootstrapApplication entry
@@ -372,7 +372,7 @@ PrimeNG dark mode is toggled by adding the `.dark-mode` class to the document ro
 
 | File | Used when | `apiUrl` |
 |------|-----------|----------|
-| `environment.ts` | `ng serve` (development) | `http://localhost:3000` |
+| `environment.ts` | `ng serve` (development) | `http://localhost:5081` |
 | `environment.prod.ts` | `ng build --configuration production` | `https://vending-api.clarivex.io` |
 
 Production browser requests go directly to the vending API. The API must allow the deployed UI origin in CORS; the current production allowlist includes `https://d2e3j8o6cbk70g.cloudfront.net`. The production Content Security Policy also allows connections to the API host.

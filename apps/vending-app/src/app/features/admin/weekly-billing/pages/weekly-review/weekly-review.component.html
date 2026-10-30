@@ -1,0 +1,116 @@
+<section class="billing-page">
+  <header class="billing-page__header">
+    <div>
+      <a routerLink="/admin/weekly-billing" class="billing-back">← Weekly Billing</a>
+      @if (review(); as result) {
+        <h2>Weekly Review</h2>
+        <p>{{ result.period.startDate | date: 'mediumDate' }} – {{ result.period.endDate | date: 'mediumDate' }}</p>
+      } @else {
+        <h2>Weekly Review</h2>
+      }
+    </div>
+    <p-button label="Add correction" icon="pi pi-plus" [disabled]="!review()?.correctionFields?.length || recalculating()" (onClick)="openCorrection()" />
+  </header>
+
+  <vpa-weekly-billing-nav />
+
+  @if (error(); as errorMessage) {
+    <div class="billing-alert" role="alert" [textContent]="errorMessage"></div>
+  }
+  @if (recalculating()) {
+    <div class="recalculation-status" role="status">Recalculating the full week and refreshing monthly totals…</div>
+  }
+
+  @if (review(); as result) {
+    <div class="billing-summary" aria-label="Server-calculated totals">
+      <article><span>Week total due</span><strong>{{ result.period.totalDue | currency: 'USD' }}</strong></article>
+      <article><span>Week vends</span><strong>{{ result.period.vendCount }}</strong></article>
+      <article><span>Month total due</span><strong>{{ result.monthlyTotalDue | currency: 'USD' }}</strong></article>
+      <article><span>Month vends</span><strong>{{ result.monthlyVendCount }}</strong></article>
+    </div>
+
+    <section class="review-section">
+      <h3>Transactions</h3>
+      <p-table [value]="result.transactions" [loading]="loading() || recalculating()" dataKey="id" [tableStyle]="{ 'min-width': '78rem' }">
+        <ng-template #header>
+          <tr>
+            <th scope="col">Transaction ID</th><th scope="col">Settlement time</th><th scope="col">Product</th>
+            <th scope="col">Price</th><th scope="col">Free item</th><th scope="col">Net price</th>
+            <th scope="col">Settlement</th><th scope="col">Status</th>
+          </tr>
+        </ng-template>
+        <ng-template #body let-transaction>
+          <tr [class.zero-settlement-retained]="transaction.highlightStatus === 'retained-zero-settlement'">
+            <td class="transaction-id" [textContent]="transaction.transactionId"></td>
+            <td>{{ transaction.settlementTime | date: 'medium' }}</td>
+            <td [textContent]="transaction.product"></td>
+            <td>{{ transaction.price | currency: 'USD' }}</td>
+            <td>{{ transaction.freeItem ? 'Yes' : 'No' }}</td>
+            <td>{{ transaction.netPrice | currency: 'USD' }}</td>
+            <td>{{ transaction.settlement | currency: 'USD' }}</td>
+            <td>
+              @if (transaction.highlightStatus === 'retained-zero-settlement') {
+                <span class="status-tag status-tag--zero">Retained · zero settlement</span>
+              } @else {
+                <span [textContent]="transaction.highlightStatus || '—'"></span>
+              }
+            </td>
+          </tr>
+        </ng-template>
+        <ng-template #emptymessage><tr><td colspan="8" class="billing-empty">No transactions in this week.</td></tr></ng-template>
+      </p-table>
+    </section>
+
+    <section class="review-section unmatched-section" aria-labelledby="unmatched-heading">
+      <h3 id="unmatched-heading">Unmatched products ({{ result.unmatchedProducts.length }})</h3>
+      @if (result.unmatchedProducts.length === 0) {
+        <p>No unmatched products were returned by the API.</p>
+      } @else {
+        <ul>@for (product of result.unmatchedProducts; track product.productName) {
+          <li><strong [textContent]="product.productName"></strong><span>{{ product.transactionCount }} transactions</span></li>
+        }</ul>
+      }
+    </section>
+
+    <section class="review-section" aria-labelledby="corrections-heading">
+      <h3 id="corrections-heading">Manual corrections</h3>
+      @if (result.corrections.length === 0) {
+        <p>No manual corrections for this week.</p>
+      } @else {
+        <div class="correction-list">
+          @for (correction of result.corrections; track correction.id) {
+            <article>
+              <div><strong>Transaction {{ correction.transactionId }}</strong><p [textContent]="correction.reason"></p><small>Updated {{ correction.updatedAt | date: 'medium' }}</small></div>
+              <div class="correction-actions">
+                <p-button label="Edit" severity="secondary" [outlined]="true" [disabled]="recalculating()" (onClick)="openCorrection(correction)" />
+                <p-button label="Delete" severity="danger" [text]="true" [disabled]="recalculating()" (onClick)="deleteCorrection(correction)" />
+              </div>
+            </article>
+          }
+        </div>
+      }
+    </section>
+  }
+
+  @if (correctionEditorOpen()) {
+    <section class="correction-editor" aria-labelledby="correction-editor-heading">
+      <h3 id="correction-editor-heading">{{ editingCorrectionId() ? 'Edit correction' : 'Add correction' }}</h3>
+      <label for="correction-transaction-id">Transaction ID</label>
+      <input id="correction-transaction-id" [value]="correctionTransactionId()" (input)="setTransactionId($event)" required />
+      @for (field of review()?.correctionFields ?? []; track field.key) {
+        <label [for]="'correction-' + field.key" [textContent]="field.label"></label>
+        @if (field.type === 'boolean') {
+          <input [id]="'correction-' + field.key" type="checkbox" [checked]="correctionValues()[field.key] === true" (change)="setCorrectionValue(field, $event)" />
+        } @else {
+          <input [id]="'correction-' + field.key" [type]="field.type === 'number' ? 'number' : 'text'" [value]="correctionValues()[field.key]" (input)="setCorrectionValue(field, $event)" />
+        }
+      }
+      <label for="correction-reason">Reason (required)</label>
+      <textarea id="correction-reason" rows="3" [value]="correctionReason()" (input)="setReason($event)"></textarea>
+      <div class="correction-actions">
+        <p-button label="Cancel" severity="secondary" [outlined]="true" [disabled]="savingCorrection()" (onClick)="closeCorrection()" />
+        <p-button label="Save and recalculate" icon="pi pi-check" [loading]="savingCorrection()" [disabled]="savingCorrection() || recalculating()" (onClick)="saveCorrection()" />
+      </div>
+    </section>
+  }
+</section>

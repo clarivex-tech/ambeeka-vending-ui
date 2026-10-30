@@ -44,8 +44,16 @@ export class ApiService {
     return this.http.get<T>(`${this.baseUrl}${path}`, { params: httpParams });
   }
 
+  getBlob(path: string): Observable<Blob> {
+    return this.http.get(`${this.baseUrl}${path}`, { responseType: 'blob' });
+  }
+
   post<T>(path: string, body: unknown): Observable<T> {
     return this.http.post<T>(`${this.baseUrl}${path}`, body);
+  }
+
+  postNoBody<T>(path: string): Observable<T> {
+    return this.http.post<T>(`${this.baseUrl}${path}`, null);
   }
 
   put<T>(path: string, body: unknown): Observable<T> {

@@ -1,0 +1,85 @@
+<section class="billing-page">
+  <header class="billing-page__header">
+    <div>
+      <h2>Import History</h2>
+      <p>Browse previously uploaded Dynamic Transactions workbooks.</p>
+    </div>
+    <p-button label="Import workbook" icon="pi pi-upload" routerLink="/admin/weekly-billing/import" />
+  </header>
+
+  <vpa-weekly-billing-nav />
+
+  @if (error(); as errorMessage) {
+    <div class="billing-state billing-state--error" role="alert">
+      <span [textContent]="errorMessage"></span>
+      <p-button label="Retry" severity="secondary" [disabled]="loading()" (onClick)="loadPage(page())" />
+    </div>
+  }
+
+  @if (deleteError(); as failure) {
+    <section class="delete-error" role="alert" aria-label="Import deletion failed">
+      <h3>Import could not be deleted</h3>
+      <p [textContent]="failure.message"></p>
+      @if (failure.importId) { <p><strong>Import ID:</strong> <code [textContent]="failure.importId"></code></p> }
+      @if (failure.calculatedAt) { <p><strong>Calculated at:</strong> {{ failure.calculatedAt | date: 'medium' }}</p> }
+    </section>
+  }
+
+  @if (history(); as result) {
+    <div class="history-summary" aria-live="polite">
+      <span>{{ result.totalCount | number }} imported workbooks</span>
+      @if (result.totalCount > 0) {
+        <span>Showing {{ firstVisibleRow() | number }}–{{ lastVisibleRow() | number }}</span>
+      }
+    </div>
+
+    <p-table [value]="result.items" [loading]="loading()" dataKey="id" [tableStyle]="{ 'min-width': '66rem' }">
+      <ng-template #header>
+        <tr>
+          <th scope="col">Workbook</th>
+          <th scope="col">Status</th>
+          <th scope="col">Transactions imported</th>
+          <th scope="col">Rows without product name</th>
+          <th scope="col">Imported at</th>
+          <th scope="col">Actions</th>
+        </tr>
+      </ng-template>
+      <ng-template #body let-item>
+        <tr>
+          <td>
+            <strong class="file-name" [textContent]="item.fileName"></strong>
+            <small class="import-id">ID: {{ item.id }}</small>
+          </td>
+          <td><span class="status-tag" [textContent]="item.status"></span></td>
+          <td>{{ item.transactionsImported | number }}</td>
+          <td>{{ item.rowsWithoutProductName | number }}</td>
+          <td>{{ item.createdAt | date: 'medium' }}</td>
+          <td>
+            <p-button
+              icon="pi pi-trash"
+              severity="danger"
+              [text]="true"
+              [loading]="deletingId() === item.id"
+              [disabled]="deletingId() !== null || loading()"
+              [ariaLabel]="'Delete import ' + item.fileName"
+              (onClick)="deleteImport(item)"
+            />
+          </td>
+        </tr>
+      </ng-template>
+      <ng-template #emptymessage>
+        <tr><td colspan="6" class="billing-state">No workbooks have been imported yet.</td></tr>
+      </ng-template>
+    </p-table>
+
+    @if (result.totalCount > result.pageSize) {
+      <nav class="history-pagination" aria-label="Import history pages">
+        <p-button label="Previous" icon="pi pi-chevron-left" severity="secondary" [outlined]="true" [disabled]="page() <= 1 || loading()" (onClick)="previousPage()" />
+        <span>Page {{ page() }} of {{ totalPages() }}</span>
+        <p-button label="Next" icon="pi pi-chevron-right" iconPos="right" severity="secondary" [outlined]="true" [disabled]="page() * result.pageSize >= result.totalCount || loading()" (onClick)="nextPage()" />
+      </nav>
+    }
+  } @else if (loading()) {
+    <div class="billing-state" role="status">Loading import history…</div>
+  }
+</section>

@@ -5,7 +5,7 @@
  ************************************************************************
  */
 
-import { Injectable, inject, NgZone } from '@angular/core';
+import { effect, Injectable, inject, NgZone } from '@angular/core';
 import { AuthService } from './auth.service';
 import { LoggerService } from './logger.service';
 
@@ -29,8 +29,15 @@ export class InactivityService {
   private timerId: ReturnType<typeof setTimeout> | null = null;
   private listening = false;
 
+  constructor() {
+    effect(() => {
+      if (this.auth.isAuthenticated()) this.start();
+      else this.stop();
+    });
+  }
+
   start(): void {
-    if (this.listening) return;
+    if (this.listening || !this.auth.isAuthenticated()) return;
     this.listening = true;
 
     this.zone.runOutsideAngular(() => {

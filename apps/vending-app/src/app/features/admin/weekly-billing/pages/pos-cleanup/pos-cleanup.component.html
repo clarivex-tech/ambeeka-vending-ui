@@ -1,0 +1,71 @@
+<section class="billing-page">
+  <header class="billing-page__header">
+    <div>
+      <h2>POS Billing Cleanup</h2>
+      <p>Review the affected records before clearing POS billing data.</p>
+    </div>
+    <p-button label="Refresh counts" icon="pi pi-refresh" severity="secondary" [outlined]="true" [loading]="loading()" [disabled]="loading() || cleaning()" (onClick)="loadPreview()" />
+  </header>
+
+  <vpa-weekly-billing-nav />
+
+  @if (error(); as errorMessage) {
+    <div class="cleanup-alert" role="alert">
+      <span [textContent]="errorMessage"></span>
+      @if (!preview()) {
+        <p-button label="Retry" severity="secondary" [disabled]="loading()" (onClick)="loadPreview()" />
+      }
+    </div>
+  }
+
+  @if (loading() && !preview()) {
+    <div class="billing-state" role="status">Loading POS billing record counts…</div>
+  }
+
+  @if (preview(); as result) {
+    <section class="billing-card" aria-labelledby="cleanup-counts-heading">
+      <h3 id="cleanup-counts-heading">Records to be deleted</h3>
+      @if (result.scope) { <p class="muted" [textContent]="result.scope"></p> }
+      <dl class="cleanup-counts">
+        @for (entry of countEntries(result.recordsToDelete); track entry.label) {
+          <div><dt [textContent]="entry.label"></dt><dd>{{ entry.value | number }}</dd></div>
+        }
+      </dl>
+      @if (result.recordsPreserved?.length) {
+        <div class="preserved-list">
+          <h4>Records preserved</h4>
+          <ul>@for (record of result.recordsPreserved ?? []; track record) { <li [textContent]="record"></li> }</ul>
+        </div>
+      }
+    </section>
+
+    <section class="cleanup-confirmation" aria-labelledby="cleanup-confirm-heading">
+      <h3 id="cleanup-confirm-heading">Confirm permanent cleanup</h3>
+      <p>This permanently deletes the POS billing records shown above. Enter the phrase exactly to enable cleanup:</p>
+      <p class="required-phrase"><code [textContent]="expectedPhrase()"></code></p>
+      <label for="cleanup-confirmation">Confirmation phrase</label>
+      <input id="cleanup-confirmation" type="text" autocomplete="off" spellcheck="false" [value]="confirmation()" (input)="setConfirmation($event)" />
+      <p-button label="Delete POS billing data" icon="pi pi-trash" severity="danger" [loading]="cleaning()" [disabled]="!canClean()" (onClick)="runCleanup()" />
+      @if (!hasRecordsToDelete()) { <p class="muted">The preview reports no POS billing records to delete.</p> }
+    </section>
+  }
+
+  @if (cleanupResult(); as result) {
+    <section class="cleanup-result" aria-live="polite" aria-labelledby="cleanup-result-heading">
+      <h3 id="cleanup-result-heading">Cleanup completed</h3>
+      <p>Completed {{ result.completedAt | date: 'medium' }}</p>
+      <h4>Records deleted</h4>
+      <dl class="cleanup-counts">
+        @for (entry of countEntries(result.deleted); track entry.label) {
+          <div><dt [textContent]="entry.label"></dt><dd>{{ entry.value | number }}</dd></div>
+        }
+      </dl>
+      @if (result.preserved?.length) {
+        <div class="preserved-list">
+          <h4>Records preserved</h4>
+          <ul>@for (record of result.preserved ?? []; track record) { <li [textContent]="record"></li> }</ul>
+        </div>
+      }
+    </section>
+  }
+</section>

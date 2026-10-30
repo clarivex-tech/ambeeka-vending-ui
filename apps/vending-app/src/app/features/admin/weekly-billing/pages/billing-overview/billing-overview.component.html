@@ -1,0 +1,179 @@
+<section class="billing-page">
+  <header class="billing-page__header">
+    <div>
+      <h2>Weekly Billing</h2>
+      <p>Create or retrieve a server-calculated billing preview.</p>
+    </div>
+    <div class="header-actions">
+      <p-button label="Import workbook" icon="pi pi-upload" routerLink="/admin/weekly-billing/import" />
+      <p-button label="Import history" icon="pi pi-list" severity="secondary" [outlined]="true" routerLink="/admin/weekly-billing/imports" />
+    </div>
+  </header>
+
+  <vpa-weekly-billing-nav />
+
+  <section class="billing-card preview-form" aria-labelledby="preview-form-heading">
+    <div>
+      <h3 id="preview-form-heading">Calculate billing</h3>
+      <p class="muted">The API calculates from imported transactions and pricing. Choose the exact POS MachineName in the workbook.</p>
+    </div>
+    <div class="form-fields">
+      <div class="form-field">
+        <label for="billing-month">Billing month</label>
+        <input id="billing-month" type="month" [value]="month()" (change)="setMonth($event)" />
+      </div>
+      <div class="form-field">
+        <label for="billing-employer">Employer / POS MachineName</label>
+        <select id="billing-employer" [value]="employer()" (change)="setEmployer($event)">
+          @for (name of employers; track name) { <option [value]="name" [textContent]="name"></option> }
+        </select>
+      </div>
+      <p-button label="Calculate" icon="pi pi-calculator" [loading]="loading()" [disabled]="loading()" (onClick)="calculate()" />
+    </div>
+    <p class="calculation-warning" role="note">Each calculation creates a saved preview and marks matching source imports as calculated, so they can no longer be deleted.</p>
+  </section>
+
+  <section class="billing-card saved-preview" aria-labelledby="saved-preview-heading">
+    <div>
+      <h3 id="saved-preview-heading">Retrieve saved preview</h3>
+      <p class="muted">Enter a calculation ID to load its saved server snapshot.</p>
+    </div>
+    <div class="saved-preview__form">
+      <label for="calculation-id">Calculation ID</label>
+      <input id="calculation-id" type="text" autocomplete="off" [value]="calculationId()" (input)="setCalculationId($event)" />
+      <p-button label="Load preview" icon="pi pi-refresh" severity="secondary" [outlined]="true" [loading]="loading()" [disabled]="loading()" (onClick)="loadSavedPreview()" />
+    </div>
+  </section>
+
+  @if (error(); as errorMessage) {
+    <div class="billing-state billing-state--error" role="alert" [textContent]="errorMessage"></div>
+  }
+  @if (loading()) {
+    <div class="billing-state" role="status">Creating or retrieving billing preview…</div>
+  }
+
+  @if (calculation(); as preview) {
+    <section class="preview-result" aria-labelledby="preview-heading">
+      <header class="preview-result__header">
+        <div>
+          <h3 id="preview-heading">{{ preview.employerName }} · {{ preview.result.year }}-{{ preview.result.month.toString().padStart(2, '0') }} preview</h3>
+          <p>Calculation ID: <code [textContent]="preview.id"></code></p>
+          <p>Created {{ preview.createdAt | date: 'medium' }}</p>
+        </div>
+        <span class="review-status" [class.review-status--ready]="preview.status === 'ReadyForReview'" [textContent]="preview.status"></span>
+      </header>
+
+      <div class="billing-summary" aria-label="Server-calculated monthly totals">
+        <article><span>Total vends</span><strong>{{ preview.result.totals.totalVends | number }}</strong></article>
+        <article><span>Price</span><strong>{{ preview.result.totals.price | currency: 'USD' }}</strong></article>
+        <article><span>Free items</span><strong>{{ preview.result.totals.freeItems | number }}</strong></article>
+        <article><span>Net price</span><strong>{{ preview.result.totals.netPrice | currency: 'USD' }}</strong></article>
+        <article><span>Employee settlement</span><strong>{{ preview.result.totals.employeeSettlement | currency: 'USD' }}</strong></article>
+        <article>
+          <span>Amount due</span>
+          @if (preview.result.totals.amountDue === null) {
+            <strong class="pending-value">Pending unmatched products</strong>
+          } @else {
+            <strong>{{ preview.result.totals.amountDue | currency: 'USD' }}</strong>
+          }
+        </article>
+      </div>
+
+      <div class="preview-readiness" [class.preview-readiness--ready]="preview.result.canFinalize">
+        <strong>{{ preview.result.canFinalize ? 'Ready to finalize' : 'Needs review before finalization' }}</strong>
+        <span>{{ preview.result.rowsWithoutProductName | number }} rows without product name</span>
+      </div>
+
+      @if (preview.result.unconfirmedRules.length > 0) {
+        <section class="unconfirmed-rules" aria-labelledby="rules-heading">
+          <h4 id="rules-heading">Unconfirmed rules</h4>
+          <ul>@for (rule of preview.result.unconfirmedRules; track $index) { <li [textContent]="rule"></li> }</ul>
+        </section>
+      }
+
+      <h3 class="weeks-heading">Weekly results</h3>
+      @for (week of preview.result.weeks; track week.startDate) {
+        <article class="week-card">
+          <header class="week-card__header">
+            <div>
+              <h4>{{ week.startDate }} – {{ week.endDate }}</h4>
+              <span>{{ week.totals.totalVends | number }} vends · {{ week.rows.length | number }} calculated rows · {{ week.unmatchedRows.length | number }} unmatched rows</span>
+            </div>
+            <div class="week-card__due">
+              <span>Amount due</span>
+              @if (week.totals.amountDue === null) {
+                <strong class="pending-value">Pending review</strong>
+              } @else {
+                <strong>{{ week.totals.amountDue | currency: 'USD' }}</strong>
+              }
+            </div>
+          </header>
+
+          <div class="week-totals">
+            <span>Price: {{ week.totals.price | currency: 'USD' }}</span>
+            <span>Free items: {{ week.totals.freeItems | number }}</span>
+            <span>Net price: {{ week.totals.netPrice | currency: 'USD' }}</span>
+            <span>Employee settlement: {{ week.totals.employeeSettlement | currency: 'USD' }}</span>
+            <span>Excluded for nonpositive net price: {{ week.rowsExcludedForNonpositiveNetPrice | number }}</span>
+          </div>
+
+          <details class="week-details">
+            <summary>Review transactions and unmatched products</summary>
+            @if (week.rows.length > 0) {
+              <div class="table-scroll">
+                <table>
+                  <thead><tr><th>Transaction ID</th><th>Settlement time</th><th>Source product</th><th>Matched product</th><th>Price</th><th>Free item</th><th>Net price</th><th>Settlement</th><th>Review</th></tr></thead>
+                  <tbody>
+                    @for (row of week.rows; track row.transactionId) {
+                      <tr [class.row-review]="row.highlightForReview">
+                        <td [textContent]="row.transactionId"></td>
+                        <td>{{ row.machineSettlementTime | date: 'medium' }}</td>
+                        <td [textContent]="row.sourceProductName"></td>
+                        <td [textContent]="row.productName"></td>
+                        <td>{{ row.price | currency: 'USD' }}</td>
+                        <td>{{ row.freeItem | number }}</td>
+                        <td>{{ row.netPrice | currency: 'USD' }}</td>
+                        <td>{{ row.settlement | currency: 'USD' }}</td>
+                        <td>{{ row.highlightForReview ? 'Review' : '—' }}</td>
+                      </tr>
+                    }
+                  </tbody>
+                </table>
+              </div>
+            } @else {
+              <p class="muted">No matched transaction rows for this week.</p>
+            }
+
+            <section class="unmatched-section" aria-label="Unmatched transactions">
+              <h5>Unmatched products ({{ week.unmatchedRows.length | number }})</h5>
+              @if (week.unmatchedRows.length > 0) {
+                <div class="table-scroll">
+                  <table>
+                    <thead><tr><th>Transaction ID</th><th>Settlement time</th><th>Source product</th><th>Settlement</th><th>Reason</th></tr></thead>
+                    <tbody>
+                      @for (row of week.unmatchedRows; track row.transactionId) {
+                        <tr class="unmatched-row">
+                          <td [textContent]="row.transactionId"></td>
+                          <td>{{ row.machineSettlementTime | date: 'medium' }}</td>
+                          <td [textContent]="row.sourceProductName"></td>
+                          <td>{{ row.settlement | currency: 'USD' }}</td>
+                          <td [textContent]="row.reason"></td>
+                        </tr>
+                      }
+                    </tbody>
+                  </table>
+                </div>
+              } @else {
+                <p class="muted">No unmatched products in this week.</p>
+              }
+            </section>
+          </details>
+        </article>
+      } @empty {
+        <div class="billing-state">The API returned no weekly results for this preview.</div>
+      }
+
+      <p class="muted export-note">Excel export is not available from this API yet.</p>
+    </section>
+  }
+</section>

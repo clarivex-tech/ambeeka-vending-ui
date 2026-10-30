@@ -1,0 +1,54 @@
+<section class="rules-page">
+  <header>
+    <div>
+      <h2>Employer Rules</h2>
+      <p>Configure calculation rules supplied by the billing API.</p>
+    </div>
+  </header>
+
+  <vpa-weekly-billing-nav />
+
+  @if (error(); as errorMessage) {
+    <div class="rules-error" role="alert" [textContent]="errorMessage"></div>
+  }
+  @if (loading()) {
+    <p role="status">Loading employer rules…</p>
+  } @else if (ruleSets().length === 0) {
+    <section class="rules-card">
+      <h3>No employer rules returned</h3>
+      <p>The API has not returned a configurable rule set. The UI does not provide employer-specific defaults.</p>
+    </section>
+  } @else if (activeRuleSet(); as ruleSet) {
+    <section class="rules-card">
+      <label for="employer-select">Employer</label>
+      <select id="employer-select" [value]="selectedEmployerId()" (change)="selectEmployer($event)">
+        @for (option of ruleSets(); track option.employerId) {
+          <option [value]="option.employerId" [textContent]="option.employerName"></option>
+        }
+      </select>
+
+      <div class="rules-fields">
+        @for (field of ruleSet.fields; track field.key) {
+          <div class="rule-field">
+            <label [for]="'rule-' + field.key" [textContent]="field.label"></label>
+            @if (field.type === 'boolean') {
+              <input [id]="'rule-' + field.key" type="checkbox" [checked]="field.value === true" (change)="setFieldValue(field, $event)" />
+            } @else if (field.type === 'select') {
+              <select [id]="'rule-' + field.key" [value]="field.value" (change)="setFieldValue(field, $event)">
+                @for (option of field.options ?? []; track option) { <option [value]="option" [textContent]="option"></option> }
+              </select>
+            } @else {
+              <input [id]="'rule-' + field.key" [type]="field.type === 'number' ? 'number' : 'text'" [value]="field.value" (input)="setFieldValue(field, $event)" />
+            }
+          </div>
+        }
+      </div>
+
+      @if (ruleSet.fields.length === 0) {
+        <p>No editable rule fields were provided for this employer.</p>
+      }
+      <p class="rules-meta">Last updated: {{ ruleSet.updatedAt | date: 'medium' }}</p>
+      <p-button label="Save rules" icon="pi pi-check" [disabled]="saving() || ruleSet.fields.length === 0" [loading]="saving()" (onClick)="saveRules()" />
+    </section>
+  }
+</section>
