@@ -1,0 +1,12 @@
+.rules-page { display: grid; gap: var(--spacing-md, 1rem); }
+.rules-page header h2 { margin: 0; }
+.rules-page header p, .rules-meta { color: var(--color-text-muted, #666); }
+.rules-card { display: grid; gap: var(--spacing-md, 1rem); max-width: 850px; padding: var(--spacing-lg, 1.5rem); border: 1px solid var(--color-border, #ddd); border-radius: var(--radius-md, 8px); background: var(--color-surface, #fff); }
+.rules-card h3 { margin: 0; }
+.rules-card select, .rule-field input:not([type='checkbox']), .rule-field select { min-height: 2.5rem; padding: var(--spacing-xs, 0.25rem) var(--spacing-sm, 0.5rem); border: 1px solid var(--color-border, #ddd); border-radius: var(--radius-sm, 4px); background: var(--color-surface, #fff); color: var(--color-text, #222); }
+.rules-fields { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--spacing-md, 1rem); }
+.rule-field { display: grid; align-content: start; gap: var(--spacing-xs, 0.25rem); }
+.rule-field label, .rules-card > label { font-weight: 600; }
+.rules-meta { margin: 0; font-size: 0.85rem; }
+.rules-error { padding: var(--spacing-sm, 0.5rem); border: 1px solid var(--color-error, #b91c1c); border-radius: var(--radius-sm, 4px); color: var(--color-error, #b91c1c); }
+@media (max-width: 650px) { .rules-fields { grid-template-columns: 1fr; } }

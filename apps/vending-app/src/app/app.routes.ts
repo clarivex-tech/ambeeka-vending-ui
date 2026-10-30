@@ -48,8 +48,11 @@ export const appRoutes: Routes = [
   },
   {
     path: '',
-    redirectTo: 'dashboard',
     pathMatch: 'full',
+    loadComponent: () =>
+      import('./features/public-home/public-home.component').then(
+        (m) => m.PublicHomeComponent,
+      ),
   },
   {
     path: 'dashboard',

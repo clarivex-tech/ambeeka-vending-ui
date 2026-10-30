@@ -16,8 +16,9 @@
  ************************************************************************
  */
 
-import { Component, inject } from '@angular/core';
-import { RouterOutlet, RouterLink, RouterLinkActive } from '@angular/router';
+import { Component, inject, signal } from '@angular/core';
+import { NavigationEnd, Router, RouterOutlet, RouterLink, RouterLinkActive } from '@angular/router';
+import { filter } from 'rxjs';
 
 import { ToolbarModule } from 'primeng/toolbar';
 import { ButtonModule } from 'primeng/button';
@@ -59,19 +60,20 @@ import { AuthService } from './core/services/auth.service';
   styleUrls: ['./app.component.scss'],
 })
 export class AppComponent {
-  title = 'vending-app';
+  title = 'Ambeeka Snacks';
   protected readonly loading = inject(LoadingService);
   protected readonly notifications = inject(NotificationService).notifications;
   protected readonly confirmDialog = inject(ConfirmDialogService).activeDialog;
   private readonly confirmService = inject(ConfirmDialogService);
   private readonly routeLoading = inject(RouteLoadingService);
-  private readonly inactivity = inject(InactivityService);
+  private readonly router = inject(Router);
 
   private readonly authSync = inject(AuthSyncService);
   private readonly auth = inject(AuthService);
 
 
   sidebarCollapsed = false;
+  readonly isStandalonePage = signal(this.isStandaloneUrl(this.router.url));
 
   get menuItems() {
     const items = [
@@ -90,8 +92,11 @@ export class AppComponent {
   }
 
   constructor() {
+    inject(InactivityService);
+    this.router.events.pipe(
+      filter((event): event is NavigationEnd => event instanceof NavigationEnd),
+    ).subscribe((event) => this.isStandalonePage.set(this.isStandaloneUrl(event.urlAfterRedirects)));
     this.routeLoading.init();
-    this.inactivity.start();
 
     this.authSync.init();
 
@@ -108,4 +113,9 @@ export class AppComponent {
   onConfirmCancel = (): void => {
     this.confirmService.resolve(false);
   };
+
+  private isStandaloneUrl(url: string): boolean {
+    const path = url.split(/[?#]/, 1)[0];
+    return path === '' || path === '/' || path === '/login' || path === '/auth/callback';
+  }
 }

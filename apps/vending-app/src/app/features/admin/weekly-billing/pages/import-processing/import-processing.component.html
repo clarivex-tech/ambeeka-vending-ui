@@ -1,0 +1,100 @@
+<section class="billing-page">
+  <header class="billing-page__header">
+    <div>
+      <a routerLink="/admin/weekly-billing" class="billing-back">← Weekly Billing</a>
+      <h2>Import &amp; Processing</h2>
+      <p>Upload a Dynamic Transactions workbook to validate and calculate billing.</p>
+    </div>
+  </header>
+
+  <vpa-weekly-billing-nav />
+
+  <section class="billing-card" aria-labelledby="upload-heading">
+    <h3 id="upload-heading">Upload workbook</h3>
+    <label for="transactions-file">Dynamic Transactions workbook (.xlsx)</label>
+    <input id="transactions-file" type="file" accept=".xlsx" (change)="selectFile($event)" />
+    <p class="muted">Maximum file size: 15 MB.</p>
+    @if (fileError(); as fileErrorMessage) {
+      <div class="billing-alert" role="alert" [textContent]="fileErrorMessage"></div>
+    }
+    @if (file(); as selected) {
+      <p class="muted">Selected: <span [textContent]="selected.name"></span></p>
+    }
+    <p-button label="Validate workbook" icon="pi pi-check" [disabled]="!file() || validating()" [loading]="validating()" (onClick)="validate()" />
+  </section>
+
+  @if (error(); as errorMessage) {
+    <div class="billing-alert" role="alert" [textContent]="errorMessage"></div>
+  }
+  @if (existingImport(); as existing) {
+    <section class="billing-card duplicate-import" aria-label="Existing workbook import">
+      <h3>This workbook was already imported</h3>
+      <dl class="validation-grid">
+        <div><dt>Import ID</dt><dd class="import-id" [textContent]="existing.existingImportId"></dd></div>
+        @if (existing.fileName) { <div><dt>File name</dt><dd [textContent]="existing.fileName"></dd></div> }
+        @if (existing.status) { <div><dt>Import status</dt><dd [textContent]="existing.status"></dd></div> }
+        @if (existing.createdAt) { <div><dt>Imported at</dt><dd [textContent]="existing.createdAt"></dd></div> }
+      </dl>
+    </section>
+  }
+  @if (validationIssues().length > 0) {
+    <section class="billing-card" aria-label="Workbook validation issues">
+      <h3>Validation issues</h3>
+      <ul>@for (issue of validationIssues(); track $index) { <li [textContent]="issue"></li> }</ul>
+    </section>
+  }
+
+  @if (validation(); as result) {
+    <section class="billing-card import-acknowledgement" aria-labelledby="validation-heading" aria-live="polite">
+      <h3 id="validation-heading">Workbook imported successfully</h3>
+      <p class="muted">The API accepted and validated this workbook.</p>
+      <dl class="validation-grid">
+        @if (result.id || result.importId) {
+          <div><dt>Import ID</dt><dd class="import-id" [textContent]="result.id || result.importId"></dd></div>
+        }
+        @if (result.fileName || file()?.name; as fileName) {
+          <div><dt>File name</dt><dd class="file-name" [textContent]="fileName"></dd></div>
+        }
+        @if (result.status) { <div><dt>Status</dt><dd [textContent]="result.status"></dd></div> }
+        @if (result.transactionsImported !== undefined) { <div><dt>Transactions imported</dt><dd>{{ result.transactionsImported | number }}</dd></div> }
+        @if (result.rowsWithoutProductName !== undefined) { <div><dt>Rows without product name</dt><dd>{{ result.rowsWithoutProductName | number }}</dd></div> }
+        @if (result.createdAt) { <div><dt>Imported at</dt><dd>{{ result.createdAt | date: 'medium' }}</dd></div> }
+      </dl>
+      @if (result.detectedStartDate || result.detectedEndDate || result.blankProductRows !== undefined) {
+        <dl class="validation-grid">
+          @if (result.detectedStartDate || result.detectedEndDate) {
+            <div><dt>Detected date range</dt><dd>{{ result.detectedStartDate || '—' }} – {{ result.detectedEndDate || '—' }}</dd></div>
+          }
+          @if (result.blankProductRows !== undefined) {
+            <div><dt>Blank-product rows</dt><dd>{{ result.blankProductRows }}</dd></div>
+          }
+        </dl>
+      }
+
+      @if (rowCountEntries().length > 0) {
+        <h4>Row counts</h4>
+        <dl class="validation-grid">
+          @for (entry of rowCountEntries(); track entry[0]) {
+            <div><dt [textContent]="entry[0]"></dt><dd>{{ entry[1] }}</dd></div>
+          }
+        </dl>
+      }
+
+      <h4>Unmatched products ({{ result.unmatchedProducts?.length ?? 0 }})</h4>
+      @if (result.unmatchedProducts === undefined) {
+        <p class="muted">The API did not return unmatched-product details.</p>
+      } @else if (result.unmatchedProducts.length === 0) {
+        <p class="muted">No unmatched products were reported.</p>
+      } @else {
+        <ul class="unmatched-list">
+          @for (product of result.unmatchedProducts; track product.productName) {
+            <li><strong [textContent]="product.productName"></strong><span>{{ product.transactionCount }} rows</span></li>
+          }
+        </ul>
+      }
+
+      <p class="muted">Next, calculate from the Overview using the billing month and exact POS MachineName.</p>
+      <p-button label="Go to Calculate" icon="pi pi-calculator" routerLink="/admin/weekly-billing" />
+    </section>
+  }
+</section>

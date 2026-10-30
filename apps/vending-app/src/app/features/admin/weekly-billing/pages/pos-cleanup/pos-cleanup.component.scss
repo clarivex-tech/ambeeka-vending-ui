@@ -1,0 +1,23 @@
+.billing-page { display: grid; gap: var(--spacing-md, 1rem); }
+.billing-page__header { display: flex; justify-content: space-between; align-items: center; gap: var(--spacing-md, 1rem); }
+.billing-page__header h2, .billing-card h3, .cleanup-confirmation h3, .cleanup-result h3 { margin: 0; }
+.billing-page__header p, .muted, .cleanup-result > p { color: var(--color-text-muted, #666); }
+.billing-card, .cleanup-confirmation, .cleanup-result { display: grid; gap: var(--spacing-md, 1rem); padding: var(--spacing-lg, 1.5rem); border: 1px solid var(--color-border, #ddd); border-radius: var(--radius-md, 8px); background: var(--color-surface, #fff); }
+.cleanup-counts { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: var(--spacing-md, 1rem); margin: 0; }
+.cleanup-counts div { display: grid; gap: var(--spacing-xs, 0.25rem); padding: var(--spacing-md, 1rem); border: 1px solid var(--color-border, #ddd); border-radius: var(--radius-sm, 4px); }
+.cleanup-counts dt { color: var(--color-text-muted, #666); }
+.cleanup-counts dd { margin: 0; font-size: 1.35rem; font-weight: 700; }
+.cleanup-confirmation { border-color: var(--color-error, #b91c1c); }
+.cleanup-confirmation h3, .cleanup-confirmation > p { margin: 0; }
+.cleanup-confirmation label { font-weight: 600; }
+.cleanup-confirmation input { min-height: 2.75rem; padding: var(--spacing-sm, 0.5rem); border: 1px solid var(--color-border, #ddd); border-radius: var(--radius-sm, 4px); }
+.required-phrase code { display: inline-block; padding: var(--spacing-sm, 0.5rem); border-radius: var(--radius-sm, 4px); background: var(--color-surface-muted, #f1f5f9); font-weight: 700; }
+.cleanup-alert { display: flex; justify-content: space-between; align-items: center; gap: var(--spacing-md, 1rem); padding: var(--spacing-md, 1rem); border: 1px solid var(--color-error, #b91c1c); border-radius: var(--radius-sm, 4px); color: var(--color-error, #b91c1c); }
+.preserved-list h4, .cleanup-result h4 { margin: 0; }
+.cleanup-result { border-color: var(--color-success, #15803d); }
+.billing-state { padding: var(--spacing-lg, 1.5rem); color: var(--color-text-muted, #666); text-align: center; }
+@media (max-width: 720px) {
+  .billing-page__header { align-items: flex-start; flex-direction: column; }
+  .cleanup-counts { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .cleanup-alert { align-items: flex-start; flex-direction: column; }
+}

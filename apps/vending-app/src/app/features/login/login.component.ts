@@ -8,7 +8,7 @@ import { AuthService } from '../../core/services/auth.service';
   template: `
     <div class="login-container">
       <div class="login-card">
-        <h1>vending-app</h1>
+        <h1>Ambeeka Snacks</h1>
         <p class="login-subtitle">Sign in to continue</p>
 
         @if (errorMessage) {
