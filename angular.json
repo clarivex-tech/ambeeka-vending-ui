@@ -34,7 +34,11 @@
                 "input": "apps/vending-app/src/index.prod.html",
                 "output": "index.html"
               },
-              "optimization": true,
+              "optimization": {
+                "styles": {
+                  "inlineCritical": false
+                }
+              },
               "extractLicenses": true,
               "sourceMap": false,
               "outputHashing": "all",
