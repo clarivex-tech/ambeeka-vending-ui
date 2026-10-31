@@ -24,6 +24,7 @@ export interface WorkbookImportResult {
   /** Kept for compatibility with the original upload response contract. */
   importId?: string;
   fileName?: string;
+  displayName?: string;
   status?: string;
   transactionsImported?: number;
   rowsWithoutProductName?: number;
@@ -33,11 +34,70 @@ export interface WorkbookImportResult {
   detectedEndDate?: string | null;
   blankProductRows?: number;
   unmatchedProducts?: UnmatchedProduct[];
+  pricingReview?: PricingReviewResponse;
+}
+
+export type PricingReviewReason = 'MissingProductName' | 'AliasNotFound' | 'AmbiguousAlias' | 'InvalidPrice';
+
+export interface PricingProductOption {
+  productId: string;
+  posAlias: string;
+  productName: string;
+  price: number;
+}
+
+export interface PricingReviewIssue {
+  importId: string;
+  sourceRowNumber: number;
+  transactionId: string;
+  machineName: string | null;
+  machineSettlementTime: string;
+  settlementValue: number;
+  productSelectionInfo: string | null;
+  productAlias: string | null;
+  reason: PricingReviewReason;
+  suggestedProducts: PricingProductOption[];
+}
+
+export interface PricingReviewResponse {
+  month?: string;
+  employer?: string;
+  importId?: string;
+  transactionsReviewed: number;
+  rowsNeedingReview: number;
+  issues: PricingReviewIssue[];
+  availableProducts: PricingProductOption[];
+  priceBasis: string;
+  pricingWarning: string;
+}
+
+export type PricingResolution =
+  | { importId: string; sourceRowNumber: number; action: 'Map'; productId: string }
+  | { importId: string; sourceRowNumber: number; action: 'Ignore' };
+
+export interface AppliedPricingResolution {
+  importId: string;
+  sourceRowNumber: number;
+  transactionId: string;
+  action: 'Map' | 'Ignore';
+  productId?: string | null;
+  productName?: string | null;
+  originalProductSelectionInfo?: string | null;
+}
+
+export interface IgnoredBillingTransaction {
+  importId: string;
+  sourceRowNumber: number;
+  transactionId: string;
+  machineSettlementTime: string;
+  productSelectionInfo: string | null;
+  settlementValue: number;
 }
 
 export interface WorkbookImportHistoryItem {
   id: string;
   fileName: string;
+  displayName?: string;
   status: string;
   transactionsImported: number;
   rowsWithoutProductName: number;
@@ -46,6 +106,23 @@ export interface WorkbookImportHistoryItem {
 
 export interface WorkbookImportHistoryPage {
   items: WorkbookImportHistoryItem[];
+  page: number;
+  pageSize: number;
+  totalCount: number;
+}
+
+export interface BillingCalculationHistoryItem {
+  id: string;
+  calculationName: string;
+  employerName: string;
+  year: number;
+  month: number;
+  status: BillingCalculationStatus;
+  createdAt: string;
+}
+
+export interface BillingCalculationHistoryPage {
+  items: BillingCalculationHistoryItem[];
   page: number;
   pageSize: number;
   totalCount: number;
@@ -119,12 +196,17 @@ export interface BillingCalculationResult {
   totals: BillingTotals;
   canFinalize: boolean;
   unconfirmedRules: string[];
+  appliedResolutions?: AppliedPricingResolution[];
+  ignoredTransactions?: IgnoredBillingTransaction[];
+  priceBasis?: string;
+  pricingWarning?: string;
 }
 
 export type BillingCalculationStatus = 'NeedsReview' | 'ReadyForReview';
 
 export interface BillingCalculationResponse {
   id: string;
+  calculationName: string;
   employerName: string;
   status: BillingCalculationStatus;
   createdAt: string;

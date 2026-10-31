@@ -47,7 +47,8 @@
       <ng-template #body let-item>
         <tr>
           <td>
-            <strong class="file-name" [textContent]="item.fileName"></strong>
+            <strong class="file-name" [textContent]="item.displayName || item.fileName"></strong>
+            @if (item.displayName && item.displayName !== item.fileName) { <small class="file-name" [textContent]="item.fileName"></small> }
             <small class="import-id">ID: {{ item.id }}</small>
           </td>
           <td><span class="status-tag" [textContent]="item.status"></span></td>
@@ -61,7 +62,7 @@
               [text]="true"
               [loading]="deletingId() === item.id"
               [disabled]="deletingId() !== null || loading()"
-              [ariaLabel]="'Delete import ' + item.fileName"
+              [ariaLabel]="'Delete import ' + (item.displayName || item.fileName)"
               (onClick)="deleteImport(item)"
             />
           </td>

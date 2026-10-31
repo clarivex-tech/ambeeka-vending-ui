@@ -30,11 +30,6 @@
   gap: var(--spacing-xs, 0.25rem);
 }
 
-.pricing-page__product-id {
-  font-family: var(--font-family-mono, monospace);
-  white-space: nowrap;
-}
-
 .pricing-state {
   padding: var(--spacing-lg, 1.5rem);
   color: var(--color-text-muted, #666);

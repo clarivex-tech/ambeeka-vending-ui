@@ -90,7 +90,7 @@ export class ImportHistoryComponent implements OnInit {
   async deleteImport(item: WorkbookImportHistoryItem): Promise<void> {
     const confirmed = await this.confirmDialog.open({
       title: 'Delete imported workbook?',
-      message: `Delete the import history for “${item.fileName}”? This action cannot be undone.`,
+      message: `Delete the import “${item.displayName || item.fileName}”? This action cannot be undone.`,
       confirmLabel: 'Delete',
       destructive: true,
     });

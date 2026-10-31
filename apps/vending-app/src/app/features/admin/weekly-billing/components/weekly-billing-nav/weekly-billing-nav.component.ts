@@ -7,7 +7,7 @@ import { RouterLink, RouterLinkActive } from '@angular/router';
   imports: [RouterLink, RouterLinkActive],
   template: `
     <nav class="billing-nav" aria-label="Weekly Billing pages">
-      <a routerLink="/admin/weekly-billing" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }" ariaCurrentWhenActive="page">Overview</a>
+      <a routerLink="/admin/weekly-billing" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }" ariaCurrentWhenActive="page">Monthly Summary</a>
       <a routerLink="/admin/weekly-billing/import" routerLinkActive="active" ariaCurrentWhenActive="page">Import &amp; Processing</a>
       <a routerLink="/admin/weekly-billing/imports" routerLinkActive="active" ariaCurrentWhenActive="page">Import History</a>
       <a routerLink="/admin/weekly-billing/pos-cleanup" routerLinkActive="active" ariaCurrentWhenActive="page">POS Cleanup</a>
