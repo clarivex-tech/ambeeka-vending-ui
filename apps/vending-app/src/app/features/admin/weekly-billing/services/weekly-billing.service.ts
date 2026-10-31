@@ -5,6 +5,7 @@ import {
   BILLING_CALCULATIONS_API_PATH,
   BILLING_IMPORTS_API_PATH,
   BILLING_POS_CLEANUP_API_PATH,
+  BILLING_PRICING_REVIEW_API_PATH,
   WEEKLY_BILLING_API_PATH,
 } from '../constants/weekly-billing.constants';
 import {
@@ -13,6 +14,8 @@ import {
   ManualCorrection,
   PosBillingCleanupPreview,
   PosBillingCleanupResult,
+  PricingResolution,
+  PricingReviewResponse,
   WeeklyReview,
   WorkbookImportHistoryPage,
   WorkbookImportResult,
@@ -22,9 +25,22 @@ import {
 export class WeeklyBillingService {
   private readonly api = inject(ApiService);
 
-  createCalculationPreview(month: string, employer: string): Observable<BillingCalculationResponse> {
+  createCalculationPreview(month: string, employer: string, resolutions: PricingResolution[]): Observable<BillingCalculationResponse> {
     const query = `month=${encodeURIComponent(month)}&employer=${encodeURIComponent(employer)}`;
-    return this.api.postNoBody<BillingCalculationResponse>(`${BILLING_CALCULATIONS_API_PATH}?${query}`);
+    return this.api.post<BillingCalculationResponse>(`${BILLING_CALCULATIONS_API_PATH}?${query}`, { resolutions });
+  }
+
+  getPricingReview(month: string, employer: string): Observable<PricingReviewResponse> {
+    return this.api.get<PricingReviewResponse>(BILLING_PRICING_REVIEW_API_PATH, {
+      month,
+      employer,
+    });
+  }
+
+  getImportPricingReview(importId: string): Observable<PricingReviewResponse> {
+    return this.api.get<PricingReviewResponse>(
+      `${BILLING_IMPORTS_API_PATH}/${encodeURIComponent(importId)}/pricing-review`,
+    );
   }
 
   getCalculationPreview(calculationId: string): Observable<BillingCalculationResponse> {

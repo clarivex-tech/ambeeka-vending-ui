@@ -17,51 +17,10 @@ import { WeeklyBillingService } from '../../services/weekly-billing.service';
 export class BillingOverviewComponent {
   private readonly billing = inject(WeeklyBillingService);
 
-  readonly month = signal(this.currentMonth());
-  readonly employers = ['Warren Valve'];
-  readonly employer = signal(this.employers[0]);
   readonly calculationId = signal('');
   readonly calculation = signal<BillingCalculationResponse | null>(null);
   readonly loading = signal(false);
   readonly error = signal<string | null>(null);
-
-  setMonth(event: Event): void {
-    this.month.set((event.target as HTMLInputElement).value);
-  }
-
-  setEmployer(event: Event): void {
-    this.employer.set((event.target as HTMLSelectElement).value);
-  }
-
-  calculate(): void {
-    const month = this.month();
-    const employer = this.employer().trim();
-    if (!month || !employer) {
-      this.error.set('Choose a month and enter the exact POS MachineName for the employer.');
-      return;
-    }
-
-    this.calculation.set(null);
-    this.error.set(null);
-    this.loading.set(true);
-    this.billing.createCalculationPreview(month, employer).subscribe({
-      next: (preview) => {
-        if (!preview.id) {
-          this.loading.set(false);
-          this.error.set('The API created a preview but did not return its calculation ID.');
-          return;
-        }
-        this.calculationId.set(preview.id);
-        this.calculation.set(preview);
-        this.employer.set(preview.employerName);
-        this.loading.set(false);
-      },
-      error: () => {
-        this.loading.set(false);
-        this.error.set('Could not calculate the billing preview. Check the month and exact POS MachineName, then try again.');
-      },
-    });
-  }
 
   loadSavedPreview(): void {
     const id = this.calculationId().trim();
@@ -84,7 +43,6 @@ export class BillingOverviewComponent {
       next: (calculation) => {
         this.calculation.set(calculation);
         this.calculationId.set(calculation.id);
-        this.employer.set(calculation.employerName);
         this.loading.set(false);
       },
       error: () => {
@@ -92,10 +50,5 @@ export class BillingOverviewComponent {
         this.loading.set(false);
       },
     });
-  }
-
-  private currentMonth(): string {
-    const now = new Date();
-    return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
   }
 }

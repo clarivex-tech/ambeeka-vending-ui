@@ -3,24 +3,45 @@
     <div>
       <a routerLink="/admin/weekly-billing" class="billing-back">← Weekly Billing</a>
       <h2>Import &amp; Processing</h2>
-      <p>Upload a Dynamic Transactions workbook to validate and calculate billing.</p>
+      <p>Validate a workbook, resolve POS product rows, then create a saved calculation snapshot.</p>
     </div>
   </header>
 
   <vpa-weekly-billing-nav />
 
+  <ol class="workflow-steps" aria-label="Import and calculation steps">
+    <li [class.workflow-step--active]="step() === 1" [class.workflow-step--done]="step() > 1"><span>1</span> Upload &amp; validate</li>
+    <li [class.workflow-step--active]="step() === 2" [class.workflow-step--done]="step() > 2"><span>2</span> Review POS rows</li>
+    <li [class.workflow-step--active]="step() === 3"><span>3</span> Calculate &amp; results</li>
+  </ol>
+
+  <section class="billing-card scope-card" aria-labelledby="scope-heading">
+    <div>
+      <h3 id="scope-heading">Calculation scope</h3>
+      <p class="muted">Choose the month and exact POS MachineName. Review includes matching transactions from all imported workbooks.</p>
+    </div>
+    <div class="scope-fields">
+      <label for="billing-month">Billing month</label>
+      <input id="billing-month" type="month" [value]="month()" (change)="setMonth($event)" />
+      <label for="billing-employer">Employer / POS MachineName</label>
+      <select id="billing-employer" [value]="employer()" (change)="setEmployer($event)">
+        @for (name of employers; track name) { <option [value]="name" [textContent]="name"></option> }
+      </select>
+    </div>
+  </section>
+
   <section class="billing-card" aria-labelledby="upload-heading">
-    <h3 id="upload-heading">Upload workbook</h3>
+    <h3 id="upload-heading">Step 1 · Upload and validate</h3>
     <label for="transactions-file">Dynamic Transactions workbook (.xlsx)</label>
     <input id="transactions-file" type="file" accept=".xlsx" (change)="selectFile($event)" />
-    <p class="muted">Maximum file size: 15 MB.</p>
+    <p class="muted">Maximum file size: 15 MB. Invalid workbook data, such as malformed dates or missing required columns, must be corrected before review.</p>
     @if (fileError(); as fileErrorMessage) {
       <div class="billing-alert" role="alert" [textContent]="fileErrorMessage"></div>
     }
     @if (file(); as selected) {
       <p class="muted">Selected: <span [textContent]="selected.name"></span></p>
     }
-    <p-button label="Validate workbook" icon="pi pi-check" [disabled]="!file() || validating()" [loading]="validating()" (onClick)="validate()" />
+    <p-button label="Upload and validate" icon="pi pi-check" [disabled]="!file() || validating()" [loading]="validating()" (onClick)="validate()" />
   </section>
 
   @if (error(); as errorMessage) {
@@ -29,17 +50,21 @@
   @if (existingImport(); as existing) {
     <section class="billing-card duplicate-import" aria-label="Existing workbook import">
       <h3>This workbook was already imported</h3>
+      <p class="muted">Opening its existing review; no duplicate import was created.</p>
       <dl class="validation-grid">
         <div><dt>Import ID</dt><dd class="import-id" [textContent]="existing.existingImportId"></dd></div>
         @if (existing.fileName) { <div><dt>File name</dt><dd [textContent]="existing.fileName"></dd></div> }
         @if (existing.status) { <div><dt>Import status</dt><dd [textContent]="existing.status"></dd></div> }
-        @if (existing.createdAt) { <div><dt>Imported at</dt><dd [textContent]="existing.createdAt"></dd></div> }
+        @if (existing.createdAt) { <div><dt>Imported at</dt><dd>{{ existing.createdAt | date: 'medium' }}</dd></div> }
       </dl>
+      @if (existingPricingReview(); as singleReview) {
+        <p class="muted">This workbook has {{ singleReview.rowsNeedingReview | number }} rows needing review.</p>
+      }
     </section>
   }
   @if (validationIssues().length > 0) {
     <section class="billing-card" aria-label="Workbook validation issues">
-      <h3>Validation issues</h3>
+      <h3>Workbook validation issues</h3>
       <ul>@for (issue of validationIssues(); track $index) { <li [textContent]="issue"></li> }</ul>
     </section>
   }
@@ -49,12 +74,8 @@
       <h3 id="validation-heading">Workbook imported successfully</h3>
       <p class="muted">The API accepted and validated this workbook.</p>
       <dl class="validation-grid">
-        @if (result.id || result.importId) {
-          <div><dt>Import ID</dt><dd class="import-id" [textContent]="result.id || result.importId"></dd></div>
-        }
-        @if (result.fileName || file()?.name; as fileName) {
-          <div><dt>File name</dt><dd class="file-name" [textContent]="fileName"></dd></div>
-        }
+        @if (result.id || result.importId) { <div><dt>Import ID</dt><dd class="import-id" [textContent]="result.id || result.importId"></dd></div> }
+        @if (result.fileName || file()?.name; as fileName) { <div><dt>File name</dt><dd class="file-name" [textContent]="fileName"></dd></div> }
         @if (result.status) { <div><dt>Status</dt><dd [textContent]="result.status"></dd></div> }
         @if (result.transactionsImported !== undefined) { <div><dt>Transactions imported</dt><dd>{{ result.transactionsImported | number }}</dd></div> }
         @if (result.rowsWithoutProductName !== undefined) { <div><dt>Rows without product name</dt><dd>{{ result.rowsWithoutProductName | number }}</dd></div> }
@@ -62,39 +83,184 @@
       </dl>
       @if (result.detectedStartDate || result.detectedEndDate || result.blankProductRows !== undefined) {
         <dl class="validation-grid">
-          @if (result.detectedStartDate || result.detectedEndDate) {
-            <div><dt>Detected date range</dt><dd>{{ result.detectedStartDate || '—' }} – {{ result.detectedEndDate || '—' }}</dd></div>
-          }
-          @if (result.blankProductRows !== undefined) {
-            <div><dt>Blank-product rows</dt><dd>{{ result.blankProductRows }}</dd></div>
-          }
+          @if (result.detectedStartDate || result.detectedEndDate) { <div><dt>Detected date range</dt><dd>{{ result.detectedStartDate || '—' }} – {{ result.detectedEndDate || '—' }}</dd></div> }
+          @if (result.blankProductRows !== undefined) { <div><dt>Blank-product rows</dt><dd>{{ result.blankProductRows }}</dd></div> }
         </dl>
       }
+      @if (result.pricingReview) {
+        <p class="muted">This workbook has {{ result.pricingReview.rowsNeedingReview | number }} POS pricing rows flagged for review.</p>
+      }
+    </section>
+  }
 
-      @if (rowCountEntries().length > 0) {
-        <h4>Row counts</h4>
-        <dl class="validation-grid">
-          @for (entry of rowCountEntries(); track entry[0]) {
-            <div><dt [textContent]="entry[0]"></dt><dd>{{ entry[1] }}</dd></div>
-          }
-        </dl>
+  @if (step() >= 2 && (validation() || existingImport())) {
+    <section class="billing-card review-card" aria-labelledby="review-heading">
+      <div class="section-heading">
+        <div>
+          <h3 id="review-heading">Step 2 · Review POS product rows</h3>
+          <p class="muted">Resolve every flagged row by mapping it to a catalog product or explicitly ignoring it.</p>
+        </div>
+        <p-button label="Refresh review" icon="pi pi-refresh" severity="secondary" [outlined]="true" [loading]="reviewLoading()" [disabled]="reviewLoading() || calculating()" (onClick)="loadPricingReview()" />
+      </div>
+
+      @if (reviewLoading()) { <div class="billing-state" role="status">Checking imported transactions for this month and employer…</div> }
+      @if (reviewError(); as message) { <div class="billing-alert" role="alert" [textContent]="message"></div> }
+      @if (review(); as pricingReview) {
+        <aside class="pricing-warning" role="note">
+          <strong>Price basis: {{ pricingReview.priceBasis }}</strong>
+          <span [textContent]="pricingReview.pricingWarning"></span>
+        </aside>
+
+        <div class="review-summary">
+          <span><strong>{{ pricingReview.transactionsReviewed | number }}</strong> transactions reviewed</span>
+          <span><strong>{{ pricingReview.rowsNeedingReview | number }}</strong> rows flagged</span>
+          <span><strong>{{ resolvedCount() | number }}</strong> decisions entered</span>
+        </div>
+
+        @if (pricingReview.issues.length === 0) {
+          <div class="review-clear" role="status">No POS pricing rows need a decision for this month and employer.</div>
+        } @else {
+          <div class="issue-list">
+            @for (issue of pricingReview.issues; track issueKey(issue)) {
+              <article class="issue-card">
+                <header class="issue-card__header">
+                  <div>
+                    <h4>Excel row {{ issue.sourceRowNumber }} · {{ reasonLabel(issue.reason) }}</h4>
+                    <span class="muted">{{ issue.machineName }} · {{ issue.machineSettlementTime | date: 'medium' }}</span>
+                  </div>
+                  @if (resolution(issue); as decision) {
+                    <span class="decision-status" [class.decision-status--ignored]="decision.action === 'Ignore'">
+                      {{ decision.action === 'Ignore' ? 'Ignored' : 'Mapped' }}
+                    </span>
+                  } @else {
+                    <span class="decision-status decision-status--pending">Decision required</span>
+                  }
+                </header>
+
+                <dl class="issue-details">
+                  <div><dt>POS product text</dt><dd [textContent]="issue.productSelectionInfo || 'No product name provided'"></dd></div>
+                  <div><dt>POS alias</dt><dd [textContent]="issue.productAlias || '—'"></dd></div>
+                  <div><dt>Settlement</dt><dd>{{ issue.settlementValue | currency: 'USD' }}</dd></div>
+                  <div><dt>Transaction ID</dt><dd class="import-id" [textContent]="issue.transactionId"></dd></div>
+                </dl>
+
+                @if (issue.suggestedProducts.length > 0) {
+                  <p class="suggestions"><strong>Suggested matches:</strong>
+                    @for (product of issue.suggestedProducts; track product.productId) {
+                      <span>{{ product.productName }} · {{ product.posAlias }} · {{ product.price | currency: 'USD' }}</span>
+                    }
+                  </p>
+                }
+
+                <div class="decision-controls">
+                  <label [for]="'product-' + issueKey(issue)">Map to catalog product</label>
+                  <select [id]="'product-' + issueKey(issue)" [value]="mappedProductId(issue)" (change)="mapIssue(issue, $event)">
+                    <option value="">Choose a product…</option>
+                    @for (product of allProducts(); track product.productId) {
+                      <option [value]="product.productId">{{ product.productName }} · {{ product.posAlias }} · {{ product.price | currency: 'USD' }}</option>
+                    }
+                  </select>
+                  <p-button label="Ignore row" icon="pi pi-ban" severity="secondary" [outlined]="true" [disabled]="resolution(issue)?.action === 'Ignore'" (onClick)="ignoreIssue(issue)" />
+                  @if (resolution(issue)) {
+                    <p-button label="Clear decision" severity="secondary" [text]="true" (onClick)="clearResolution(issue)" />
+                  }
+                </div>
+              </article>
+            }
+          </div>
+        }
+
+        @if (calculationError(); as message) { <div class="billing-alert" role="alert" [textContent]="message"></div> }
+        <div class="review-actions">
+          <p class="muted">Ignored rows are excluded from price, settlement, and amount-due totals. Current catalog pricing is used for mapped rows. Decisions stay on this page and are saved with a successful calculation.</p>
+          <p-button label="Calculate and show summary" icon="pi pi-calculator" [loading]="calculating()" [disabled]="!canCalculate()" (onClick)="calculate()" />
+        </div>
+      }
+    </section>
+  }
+
+  @if (step() === 3 && calculation(); as result) {
+    <section class="billing-card calculation-result" aria-labelledby="calculation-heading" aria-live="polite">
+      <header class="section-heading">
+        <div>
+          <h3 id="calculation-heading">Step 3 · Calculation snapshot</h3>
+          <p>{{ result.employerName }} · {{ result.result.year }}-{{ result.result.month.toString().padStart(2, '0') }} · Created {{ result.createdAt | date: 'medium' }}</p>
+          <p>Calculation ID: <code class="import-id" [textContent]="result.id"></code></p>
+        </div>
+        <span class="decision-status" [class.decision-status--pending]="result.status === 'NeedsReview'">{{ result.status }}</span>
+      </header>
+
+      @if (result.result.pricingWarning || review()?.pricingWarning) {
+        <aside class="pricing-warning" role="note">
+          <strong>Price basis: {{ result.result.priceBasis || review()?.priceBasis }}</strong>
+          <span [textContent]="result.result.pricingWarning || review()?.pricingWarning"></span>
+        </aside>
       }
 
-      <h4>Unmatched products ({{ result.unmatchedProducts?.length ?? 0 }})</h4>
-      @if (result.unmatchedProducts === undefined) {
-        <p class="muted">The API did not return unmatched-product details.</p>
-      } @else if (result.unmatchedProducts.length === 0) {
-        <p class="muted">No unmatched products were reported.</p>
-      } @else {
-        <ul class="unmatched-list">
-          @for (product of result.unmatchedProducts; track product.productName) {
-            <li><strong [textContent]="product.productName"></strong><span>{{ product.transactionCount }} rows</span></li>
-          }
-        </ul>
+      <div class="billing-summary" aria-label="Server-calculated monthly totals">
+        <article><span>Total vends</span><strong>{{ result.result.totals.totalVends | number }}</strong></article>
+        <article><span>Price</span><strong>{{ result.result.totals.price | currency: 'USD' }}</strong></article>
+        <article><span>Free items</span><strong>{{ result.result.totals.freeItems | number }}</strong></article>
+        <article><span>Net price</span><strong>{{ result.result.totals.netPrice | currency: 'USD' }}</strong></article>
+        <article><span>Employee settlement</span><strong>{{ result.result.totals.employeeSettlement | currency: 'USD' }}</strong></article>
+        <article>
+          <span>Amount due</span>
+          @if (result.result.totals.amountDue === null) { <strong class="pending-value">Pending review</strong> }
+          @else { <strong>{{ result.result.totals.amountDue | currency: 'USD' }}</strong> }
+        </article>
+        <article><span>Ignored transactions</span><strong>{{ result.result.ignoredTransactions?.length ?? 0 | number }}</strong></article>
+      </div>
+
+      <div class="preview-readiness" [class.preview-readiness--ready]="result.result.canFinalize">
+        <strong>{{ result.result.canFinalize ? 'Ready to finalize' : 'Needs review before finalization' }}</strong>
+        <span>{{ result.result.rowsWithoutProductName | number }} rows without product name</span>
+      </div>
+
+      @if ((result.result.ignoredTransactions?.length ?? 0) > 0) {
+        <details class="ignored-details">
+          <summary>Ignored transactions ({{ result.result.ignoredTransactions?.length ?? 0 }})</summary>
+          <div class="table-scroll">
+            <table>
+              <thead><tr><th>Excel row</th><th>Transaction ID</th><th>POS product</th><th>Settlement</th></tr></thead>
+              <tbody>
+                @for (row of result.result.ignoredTransactions; track row.importId + ':' + row.sourceRowNumber) {
+                  <tr><td>{{ row.sourceRowNumber }}</td><td [textContent]="row.transactionId"></td><td [textContent]="row.productSelectionInfo || 'No product name provided'"></td><td>{{ row.settlementValue | currency: 'USD' }}</td></tr>
+                }
+              </tbody>
+            </table>
+          </div>
+        </details>
       }
 
-      <p class="muted">Next, calculate from the Overview using the billing month and exact POS MachineName.</p>
-      <p-button label="Go to Calculate" icon="pi pi-calculator" routerLink="/admin/weekly-billing" />
+      @if (result.result.appliedResolutions?.length) {
+        <p class="muted">{{ appliedResolutionCount(result) | number }} row decisions were saved in this calculation snapshot.</p>
+      }
+
+      @if (result.result.unconfirmedRules.length > 0) {
+        <section class="unconfirmed-rules" aria-labelledby="rules-heading">
+          <h4 id="rules-heading">Unconfirmed rules</h4>
+          <ul>@for (rule of result.result.unconfirmedRules; track $index) { <li [textContent]="rule"></li> }</ul>
+        </section>
+      }
+
+      <h4>Weekly results</h4>
+      <div class="weekly-results">
+        @for (week of result.result.weeks; track week.startDate) {
+          <article class="week-summary">
+            <header><strong>{{ week.startDate }} – {{ week.endDate }}</strong><span>{{ week.totals.totalVends | number }} vends</span></header>
+            <div><span>Price: {{ week.totals.price | currency: 'USD' }}</span><span>Settlement: {{ week.totals.employeeSettlement | currency: 'USD' }}</span></div>
+            <strong>Amount due: {{ week.totals.amountDue === null ? 'Pending review' : (week.totals.amountDue | currency: 'USD') }}</strong>
+            @if (week.unmatchedRows.length > 0) { <p class="unmatched-note">{{ week.unmatchedRows.length | number }} unmatched rows remain visible in the saved snapshot.</p> }
+          </article>
+        } @empty {
+          <p class="muted">The API returned no weekly results for this calculation.</p>
+        }
+      </div>
+
+      <div class="result-actions">
+        <p-button label="Import another workbook" icon="pi pi-upload" severity="secondary" [outlined]="true" (onClick)="startAnotherImport()" />
+        <a routerLink="/admin/weekly-billing">Open Billing Overview</a>
+      </div>
     </section>
   }
 </section>

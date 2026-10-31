@@ -14,23 +14,11 @@
 
   <section class="billing-card preview-form" aria-labelledby="preview-form-heading">
     <div>
-      <h3 id="preview-form-heading">Calculate billing</h3>
-      <p class="muted">The API calculates from imported transactions and pricing. Choose the exact POS MachineName in the workbook.</p>
+      <h3 id="preview-form-heading">Start a calculation</h3>
+      <p class="muted">New calculations run through the import workflow so POS review decisions are included before the API creates a snapshot.</p>
     </div>
-    <div class="form-fields">
-      <div class="form-field">
-        <label for="billing-month">Billing month</label>
-        <input id="billing-month" type="month" [value]="month()" (change)="setMonth($event)" />
-      </div>
-      <div class="form-field">
-        <label for="billing-employer">Employer / POS MachineName</label>
-        <select id="billing-employer" [value]="employer()" (change)="setEmployer($event)">
-          @for (name of employers; track name) { <option [value]="name" [textContent]="name"></option> }
-        </select>
-      </div>
-      <p-button label="Calculate" icon="pi pi-calculator" [loading]="loading()" [disabled]="loading()" (onClick)="calculate()" />
-    </div>
-    <p class="calculation-warning" role="note">Each calculation creates a saved preview and marks matching source imports as calculated, so they can no longer be deleted.</p>
+    <p-button label="Open Import &amp; Processing" icon="pi pi-upload" routerLink="/admin/weekly-billing/import" />
+    <p class="calculation-warning" role="note">A successful calculation creates a saved preview and marks matching source imports as calculated, so they can no longer be deleted.</p>
   </section>
 
   <section class="billing-card saved-preview" aria-labelledby="saved-preview-heading">
@@ -69,6 +57,7 @@
         <article><span>Free items</span><strong>{{ preview.result.totals.freeItems | number }}</strong></article>
         <article><span>Net price</span><strong>{{ preview.result.totals.netPrice | currency: 'USD' }}</strong></article>
         <article><span>Employee settlement</span><strong>{{ preview.result.totals.employeeSettlement | currency: 'USD' }}</strong></article>
+        <article><span>Ignored transactions</span><strong>{{ preview.result.ignoredTransactions?.length ?? 0 | number }}</strong></article>
         <article>
           <span>Amount due</span>
           @if (preview.result.totals.amountDue === null) {
