@@ -12,15 +12,6 @@
 
   <vpa-weekly-billing-nav />
 
-  <section class="billing-card preview-form" aria-labelledby="preview-form-heading">
-    <div>
-      <h3 id="preview-form-heading">Start a calculation</h3>
-      <p class="muted">New calculations run through the import workflow so POS review decisions are included before the API creates a snapshot.</p>
-    </div>
-    <p-button label="Open Import &amp; Processing" icon="pi pi-upload" routerLink="/admin/weekly-billing/import" />
-    <p class="calculation-warning" role="note">A successful calculation creates a saved preview and marks matching source imports as calculated, so they can no longer be deleted.</p>
-  </section>
-
   <section class="billing-card saved-preview" aria-labelledby="saved-preview-heading">
     <div>
       <h3 id="saved-preview-heading">Saved calculations</h3>
@@ -36,7 +27,10 @@
           }
         </select>
         <p-button label="Refresh list" icon="pi pi-refresh" severity="secondary" [outlined]="true" [loading]="historyLoading()" [disabled]="historyLoading()" (onClick)="loadPage(page())" />
-        @if (result.items.length === 0) { <p class="muted">No saved calculations yet. Start one from Import &amp; Processing.</p> }
+        @if (result.items.length === 0) {
+          <p class="muted">No saved calculations yet.</p>
+          <p-button label="Start a calculation" icon="pi pi-upload" routerLink="/admin/weekly-billing/import" />
+        }
         @if (result.totalCount > result.pageSize) {
           <nav class="calculation-pagination" aria-label="Saved calculation pages">
             <p-button label="Previous" icon="pi pi-chevron-left" severity="secondary" [outlined]="true" [disabled]="page() <= 1 || historyLoading()" (onClick)="previousPage()" />
