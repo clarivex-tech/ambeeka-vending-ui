@@ -3,12 +3,9 @@
 .billing-page__header h2, .billing-page__header p, .billing-card h3, .preview-result h3 { margin: 0; }
 .billing-page__header p, .muted, .preview-result__header p, .week-card__header span { color: var(--color-text-muted, #666); }
 .billing-card, .preview-result { display: grid; gap: 1rem; padding: 1.5rem; border: 1px solid var(--color-border, #ddd); border-radius: 8px; background: var(--color-surface, #fff); }
-.form-fields { display: grid; grid-template-columns: minmax(12rem, 0.7fr) minmax(18rem, 1.3fr) auto; align-items: end; gap: 1rem; }
-.form-field, .saved-preview__form { display: grid; gap: 0.25rem; }
-.form-field label, .saved-preview__form label { font-weight: 600; }
-.form-field input, .form-field select, .saved-preview__form input, .saved-preview__form select { min-height: 2.5rem; padding: 0.5rem; border: 1px solid var(--color-border, #ddd); border-radius: 4px; background: var(--color-surface, #fff); color: var(--color-text, #222); }
-.saved-preview__form { grid-template-columns: minmax(18rem, 1fr) auto; align-items: end; }
-.saved-preview__form label { grid-column: 1 / -1; }
+.saved-preview__form { display: grid; grid-template-columns: minmax(18rem, 1fr) auto; align-items: end; gap: 0.25rem; }
+.saved-preview__form label { grid-column: 1 / -1; font-weight: 600; }
+.saved-preview__form select { min-height: 2.5rem; padding: 0.5rem; border: 1px solid var(--color-border, #ddd); border-radius: 4px; background: var(--color-surface, #fff); color: var(--color-text, #222); }
 .billing-state { padding: 1rem; color: var(--color-text-muted, #666); text-align: center; }
 .billing-state--error { border: 1px solid var(--color-error, #b91c1c); border-radius: 4px; color: var(--color-error, #b91c1c); }
 .preview-result__header { align-items: flex-start; }
@@ -39,7 +36,7 @@ th { color: var(--color-text-muted, #666); font-weight: 600; }
 @media (max-width: 800px) {
   .billing-page__header, .preview-result__header, .week-card__header { align-items: flex-start; flex-direction: column; }
   .header-actions { flex-wrap: wrap; }
-  .form-fields, .saved-preview__form { grid-template-columns: 1fr; }
+  .saved-preview__form { grid-template-columns: 1fr; }
   .saved-preview__form label { grid-column: auto; }
   .billing-summary { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .preview-readiness { display: grid; }
