@@ -9,7 +9,7 @@
 .billing-card { display: grid; gap: .75rem; padding: 1.25rem; border: 1px solid var(--color-border, #ddd); border-radius: 8px; background: var(--color-surface, #fff); }
 .scope-card { grid-template-columns: 1fr 1fr; align-items: end; }
 .scope-fields { display: grid; grid-template-columns: auto 1fr; align-items: center; gap: .5rem; }
-.scope-fields input, .scope-fields select, .decision-controls select { min-height: 2.5rem; padding: .5rem; border: 1px solid var(--color-border, #ddd); border-radius: 4px; background: var(--color-surface, #fff); color: var(--color-text, #222); }
+.scope-fields input, .scope-fields select, .decision-controls select, #workbook-display-name, #calculation-name { min-height: 2.5rem; padding: .5rem; border: 1px solid var(--color-border, #ddd); border-radius: 4px; background: var(--color-surface, #fff); color: var(--color-text, #222); }
 .decision-controls select { flex: 1 1 22rem; }
 .import-acknowledgement { border-color: var(--color-success, #15803d); }
 .validation-grid, .issue-details { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: .75rem; margin: 0; }

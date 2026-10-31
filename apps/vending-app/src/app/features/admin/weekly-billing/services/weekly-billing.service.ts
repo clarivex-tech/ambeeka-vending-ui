@@ -10,6 +10,7 @@ import {
 } from '../constants/weekly-billing.constants';
 import {
   BillingCalculationResponse,
+  BillingCalculationHistoryPage,
   EmployerRuleSet,
   ManualCorrection,
   PosBillingCleanupPreview,
@@ -25,9 +26,18 @@ import {
 export class WeeklyBillingService {
   private readonly api = inject(ApiService);
 
-  createCalculationPreview(month: string, employer: string, resolutions: PricingResolution[]): Observable<BillingCalculationResponse> {
+  createCalculationPreview(month: string, employer: string, resolutions: PricingResolution[], calculationName?: string): Observable<BillingCalculationResponse> {
     const query = `month=${encodeURIComponent(month)}&employer=${encodeURIComponent(employer)}`;
-    return this.api.post<BillingCalculationResponse>(`${BILLING_CALCULATIONS_API_PATH}?${query}`, { resolutions });
+    const body: { resolutions: PricingResolution[]; calculationName?: string } = { resolutions };
+    if (calculationName?.trim()) body.calculationName = calculationName.trim();
+    return this.api.post<BillingCalculationResponse>(`${BILLING_CALCULATIONS_API_PATH}?${query}`, body);
+  }
+
+  getCalculationHistory(page: number, pageSize: number): Observable<BillingCalculationHistoryPage> {
+    return this.api.get<BillingCalculationHistoryPage>(BILLING_CALCULATIONS_API_PATH, {
+      page: String(page),
+      pageSize: String(pageSize),
+    });
   }
 
   getPricingReview(month: string, employer: string): Observable<PricingReviewResponse> {
@@ -53,9 +63,10 @@ export class WeeklyBillingService {
     return this.api.getBlob(`${WEEKLY_BILLING_API_PATH}/weeks/${encodeURIComponent(weekId)}/workbook`);
   }
 
-  validateWorkbook(file: File): Observable<WorkbookImportResult> {
+  validateWorkbook(file: File, displayName?: string): Observable<WorkbookImportResult> {
     const body = new FormData();
     body.append('file', file);
+    if (displayName?.trim()) body.append('displayName', displayName.trim());
     return this.api.post<WorkbookImportResult>(BILLING_IMPORTS_API_PATH, body);
   }
 

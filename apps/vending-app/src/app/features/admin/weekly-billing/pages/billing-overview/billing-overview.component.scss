@@ -6,7 +6,7 @@
 .form-fields { display: grid; grid-template-columns: minmax(12rem, 0.7fr) minmax(18rem, 1.3fr) auto; align-items: end; gap: 1rem; }
 .form-field, .saved-preview__form { display: grid; gap: 0.25rem; }
 .form-field label, .saved-preview__form label { font-weight: 600; }
-.form-field input, .form-field select, .saved-preview__form input { min-height: 2.5rem; padding: 0.5rem; border: 1px solid var(--color-border, #ddd); border-radius: 4px; background: var(--color-surface, #fff); color: var(--color-text, #222); }
+.form-field input, .form-field select, .saved-preview__form input, .saved-preview__form select { min-height: 2.5rem; padding: 0.5rem; border: 1px solid var(--color-border, #ddd); border-radius: 4px; background: var(--color-surface, #fff); color: var(--color-text, #222); }
 .saved-preview__form { grid-template-columns: minmax(18rem, 1fr) auto; align-items: end; }
 .saved-preview__form label { grid-column: 1 / -1; }
 .billing-state { padding: 1rem; color: var(--color-text-muted, #666); text-align: center; }

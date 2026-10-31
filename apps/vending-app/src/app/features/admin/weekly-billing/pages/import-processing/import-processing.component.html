@@ -40,6 +40,9 @@
     }
     @if (file(); as selected) {
       <p class="muted">Selected: <span [textContent]="selected.name"></span></p>
+      <label for="workbook-display-name">Workbook display name</label>
+      <input id="workbook-display-name" type="text" maxlength="255" [value]="displayName()" (input)="setDisplayName($event)" />
+      <p class="muted">This label appears in import history. It defaults to the filename without .xlsx.</p>
     }
     <p-button label="Upload and validate" icon="pi pi-check" [disabled]="!file() || validating()" [loading]="validating()" (onClick)="validate()" />
   </section>
@@ -53,6 +56,7 @@
       <p class="muted">Opening its existing review; no duplicate import was created.</p>
       <dl class="validation-grid">
         <div><dt>Import ID</dt><dd class="import-id" [textContent]="existing.existingImportId"></dd></div>
+        @if (existing.displayName) { <div><dt>Workbook name</dt><dd [textContent]="existing.displayName"></dd></div> }
         @if (existing.fileName) { <div><dt>File name</dt><dd [textContent]="existing.fileName"></dd></div> }
         @if (existing.status) { <div><dt>Import status</dt><dd [textContent]="existing.status"></dd></div> }
         @if (existing.createdAt) { <div><dt>Imported at</dt><dd>{{ existing.createdAt | date: 'medium' }}</dd></div> }
@@ -75,6 +79,7 @@
       <p class="muted">The API accepted and validated this workbook.</p>
       <dl class="validation-grid">
         @if (result.id || result.importId) { <div><dt>Import ID</dt><dd class="import-id" [textContent]="result.id || result.importId"></dd></div> }
+        @if (result.displayName || displayName(); as workbookName) { <div><dt>Workbook name</dt><dd class="file-name" [textContent]="workbookName"></dd></div> }
         @if (result.fileName || file()?.name; as fileName) { <div><dt>File name</dt><dd class="file-name" [textContent]="fileName"></dd></div> }
         @if (result.status) { <div><dt>Status</dt><dd [textContent]="result.status"></dd></div> }
         @if (result.transactionsImported !== undefined) { <div><dt>Transactions imported</dt><dd>{{ result.transactionsImported | number }}</dd></div> }
@@ -101,6 +106,11 @@
           <p class="muted">Resolve every flagged row by mapping it to a catalog product or explicitly ignoring it.</p>
         </div>
         <p-button label="Refresh review" icon="pi pi-refresh" severity="secondary" [outlined]="true" [loading]="reviewLoading()" [disabled]="reviewLoading() || calculating()" (onClick)="loadPricingReview()" />
+      </div>
+      <div class="calculation-name-field">
+        <label for="calculation-name">Calculation name</label>
+        <input id="calculation-name" type="text" maxlength="255" [value]="calculationName()" (input)="setCalculationName($event)" />
+        <p class="muted">This label appears in Billing Overview. It defaults to the employer and billing month.</p>
       </div>
 
       @if (reviewLoading()) { <div class="billing-state" role="status">Checking imported transactions for this month and employer…</div> }
@@ -185,6 +195,7 @@
         <div>
           <h3 id="calculation-heading">Step 3 · Calculation snapshot</h3>
           <p>{{ result.employerName }} · {{ result.result.year }}-{{ result.result.month.toString().padStart(2, '0') }} · Created {{ result.createdAt | date: 'medium' }}</p>
+          @if (result.calculationName) { <p>Calculation name: <strong [textContent]="result.calculationName"></strong></p> }
           <p>Calculation ID: <code class="import-id" [textContent]="result.id"></code></p>
         </div>
         <span class="decision-status" [class.decision-status--pending]="result.status === 'NeedsReview'">{{ result.status }}</span>

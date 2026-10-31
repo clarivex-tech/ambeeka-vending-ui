@@ -24,6 +24,7 @@ export interface WorkbookImportResult {
   /** Kept for compatibility with the original upload response contract. */
   importId?: string;
   fileName?: string;
+  displayName?: string;
   status?: string;
   transactionsImported?: number;
   rowsWithoutProductName?: number;
@@ -96,6 +97,7 @@ export interface IgnoredBillingTransaction {
 export interface WorkbookImportHistoryItem {
   id: string;
   fileName: string;
+  displayName?: string;
   status: string;
   transactionsImported: number;
   rowsWithoutProductName: number;
@@ -104,6 +106,23 @@ export interface WorkbookImportHistoryItem {
 
 export interface WorkbookImportHistoryPage {
   items: WorkbookImportHistoryItem[];
+  page: number;
+  pageSize: number;
+  totalCount: number;
+}
+
+export interface BillingCalculationHistoryItem {
+  id: string;
+  calculationName: string;
+  employerName: string;
+  year: number;
+  month: number;
+  status: BillingCalculationStatus;
+  createdAt: string;
+}
+
+export interface BillingCalculationHistoryPage {
+  items: BillingCalculationHistoryItem[];
   page: number;
   pageSize: number;
   totalCount: number;
@@ -187,6 +206,7 @@ export type BillingCalculationStatus = 'NeedsReview' | 'ReadyForReview';
 
 export interface BillingCalculationResponse {
   id: string;
+  calculationName: string;
   employerName: string;
   status: BillingCalculationStatus;
   createdAt: string;

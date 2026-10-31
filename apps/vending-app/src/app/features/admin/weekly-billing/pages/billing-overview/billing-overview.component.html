@@ -23,21 +23,41 @@
 
   <section class="billing-card saved-preview" aria-labelledby="saved-preview-heading">
     <div>
-      <h3 id="saved-preview-heading">Retrieve saved preview</h3>
-      <p class="muted">Enter a calculation ID to load its saved server snapshot.</p>
+      <h3 id="saved-preview-heading">Saved calculations</h3>
+      <p class="muted">Choose a calculation by name to load its saved server snapshot.</p>
     </div>
     <div class="saved-preview__form">
-      <label for="calculation-id">Calculation ID</label>
-      <input id="calculation-id" type="text" autocomplete="off" [value]="calculationId()" (input)="setCalculationId($event)" />
-      <p-button label="Load preview" icon="pi pi-refresh" severity="secondary" [outlined]="true" [loading]="loading()" [disabled]="loading()" (onClick)="loadSavedPreview()" />
+      @if (history(); as result) {
+        <label for="calculation-select">Calculation</label>
+        <select id="calculation-select" [value]="calculationId()" [disabled]="historyLoading()" (change)="selectCalculation($event)">
+          <option value="">Choose a saved calculation…</option>
+          @for (item of result.items; track item.id) {
+            <option [value]="item.id" [textContent]="item.calculationName"></option>
+          }
+        </select>
+        <p-button label="Refresh list" icon="pi pi-refresh" severity="secondary" [outlined]="true" [loading]="historyLoading()" [disabled]="historyLoading()" (onClick)="loadPage(page())" />
+        @if (result.items.length === 0) { <p class="muted">No saved calculations yet. Start one from Import &amp; Processing.</p> }
+        @if (result.totalCount > result.pageSize) {
+          <nav class="calculation-pagination" aria-label="Saved calculation pages">
+            <p-button label="Previous" icon="pi pi-chevron-left" severity="secondary" [outlined]="true" [disabled]="page() <= 1 || historyLoading()" (onClick)="previousPage()" />
+            <span>Page {{ page() }} of {{ totalPages() }}</span>
+            <p-button label="Next" icon="pi pi-chevron-right" iconPos="right" severity="secondary" [outlined]="true" [disabled]="page() * result.pageSize >= result.totalCount || historyLoading()" (onClick)="nextPage()" />
+          </nav>
+        }
+      } @else if (historyLoading()) {
+        <div class="billing-state" role="status">Loading saved calculations…</div>
+      }
     </div>
   </section>
 
   @if (error(); as errorMessage) {
-    <div class="billing-state billing-state--error" role="alert" [textContent]="errorMessage"></div>
+    <div class="billing-state billing-state--error" role="alert">
+      <span [textContent]="errorMessage"></span>
+      <p-button label="Retry" severity="secondary" [disabled]="historyLoading() || loading()" (onClick)="loadPage(page())" />
+    </div>
   }
   @if (loading()) {
-    <div class="billing-state" role="status">Creating or retrieving billing preview…</div>
+    <div class="billing-state" role="status">Loading saved calculation…</div>
   }
 
   @if (calculation(); as preview) {
@@ -45,6 +65,7 @@
       <header class="preview-result__header">
         <div>
           <h3 id="preview-heading">{{ preview.employerName }} · {{ preview.result.year }}-{{ preview.result.month.toString().padStart(2, '0') }} preview</h3>
+          @if (preview.calculationName) { <p>Calculation name: <strong [textContent]="preview.calculationName"></strong></p> }
           <p>Calculation ID: <code [textContent]="preview.id"></code></p>
           <p>Created {{ preview.createdAt | date: 'medium' }}</p>
         </div>

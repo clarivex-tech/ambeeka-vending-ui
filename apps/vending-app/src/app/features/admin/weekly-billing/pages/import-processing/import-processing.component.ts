@@ -17,6 +17,7 @@ import { WeeklyBillingService } from '../../services/weekly-billing.service';
 
 interface ExistingImportInfo {
   existingImportId: string;
+  displayName?: string;
   fileName?: string;
   status?: string;
   createdAt?: string;
@@ -34,6 +35,7 @@ export class ImportProcessingComponent {
   private readonly billing = inject(WeeklyBillingService);
   private reviewRequestId = 0;
   readonly file = signal<File | null>(null);
+  readonly displayName = signal('');
   readonly validation = signal<WorkbookImportResult | null>(null);
   readonly validationIssues = signal<string[]>([]);
   readonly existingImport = signal<ExistingImportInfo | null>(null);
@@ -46,6 +48,8 @@ export class ImportProcessingComponent {
   readonly month = signal(this.currentMonth());
   readonly employers = ['Warren Valve'];
   readonly employer = signal(this.employers[0]);
+  readonly calculationName = signal(this.defaultCalculationName());
+  private calculationNameEdited = false;
   readonly validating = signal(false);
   readonly reviewLoading = signal(false);
   readonly calculating = signal(false);
@@ -62,6 +66,7 @@ export class ImportProcessingComponent {
     const input = event.target as HTMLInputElement;
     const selected = input.files?.[0] ?? null;
     this.file.set(selected);
+    this.displayName.set(selected?.name.replace(/\.xlsx$/i, '') ?? '');
     this.validation.set(null);
     this.validationIssues.set([]);
     this.existingImport.set(null);
@@ -84,12 +89,23 @@ export class ImportProcessingComponent {
   setMonth(event: Event): void {
     const value = (event.target as HTMLInputElement).value;
     this.month.set(value);
+    this.updateDefaultCalculationName();
     this.scopeChanged();
   }
 
   setEmployer(event: Event): void {
     this.employer.set((event.target as HTMLSelectElement).value);
+    this.updateDefaultCalculationName();
     this.scopeChanged();
+  }
+
+  setDisplayName(event: Event): void {
+    this.displayName.set((event.target as HTMLInputElement).value);
+  }
+
+  setCalculationName(event: Event): void {
+    this.calculationName.set((event.target as HTMLInputElement).value);
+    this.calculationNameEdited = true;
   }
 
   validate(): void {
@@ -100,7 +116,7 @@ export class ImportProcessingComponent {
     this.validationIssues.set([]);
     this.existingImport.set(null);
     this.existingPricingReview.set(null);
-    this.billing.validateWorkbook(selected).subscribe({
+    this.billing.validateWorkbook(selected, this.displayName()).subscribe({
       next: (result) => {
         this.validation.set(result);
         this.validating.set(false);
@@ -116,6 +132,7 @@ export class ImportProcessingComponent {
         if (existingImportId) {
           this.existingImport.set({
             existingImportId,
+            displayName: this.optionalString(body?.displayName),
             fileName: this.optionalString(body?.fileName),
             status: this.optionalString(body?.status),
             createdAt: this.optionalString(body?.createdAt),
@@ -236,6 +253,8 @@ export class ImportProcessingComponent {
     return !!review
       && (!!this.validation() || !!this.existingImport())
       && this.reviewScopeLoaded()
+      && !!this.month()
+      && !!this.employer().trim()
       && !this.reviewLoading()
       && !this.calculating()
       && this.resolvedCount() === review.issues.length;
@@ -252,7 +271,8 @@ export class ImportProcessingComponent {
       .filter((resolution): resolution is PricingResolution => resolution !== undefined);
     this.calculating.set(true);
     this.calculationError.set(null);
-    this.billing.createCalculationPreview(month, employer, resolutions).subscribe({
+    const calculationName = this.calculationName().trim();
+    this.billing.createCalculationPreview(month, employer, resolutions, calculationName).subscribe({
       next: (calculation) => {
         this.calculation.set(calculation);
         this.step.set(3);
@@ -270,6 +290,7 @@ export class ImportProcessingComponent {
 
   startAnotherImport(): void {
     this.file.set(null);
+    this.displayName.set('');
     this.validation.set(null);
     this.validationIssues.set([]);
     this.existingImport.set(null);
@@ -282,6 +303,8 @@ export class ImportProcessingComponent {
     this.reviewError.set(null);
     this.calculationError.set(null);
     this.fileError.set(null);
+    this.calculationNameEdited = false;
+    this.calculationName.set(this.defaultCalculationName());
     this.step.set(1);
   }
 
@@ -361,5 +384,17 @@ export class ImportProcessingComponent {
   private currentMonth(): string {
     const now = new Date();
     return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+  }
+
+  private defaultCalculationName(): string {
+    const month = this.month();
+    if (!/^\d{4}-\d{2}$/.test(month)) return `${this.employer()} · Billing`;
+    const date = new Date(`${month}-01T12:00:00`);
+    const period = new Intl.DateTimeFormat('en-US', { month: 'short', year: 'numeric' }).format(date);
+    return `${this.employer()} · ${period}`;
+  }
+
+  private updateDefaultCalculationName(): void {
+    if (!this.calculationNameEdited) this.calculationName.set(this.defaultCalculationName());
   }
 }
