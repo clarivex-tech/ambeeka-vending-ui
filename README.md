@@ -40,7 +40,7 @@
 # Install dependencies
 npm install
 
-# Start development server (http://localhost:4200)
+# Start development server (http://localhost:4209)
 npm start
 
 # Run unit tests
@@ -56,7 +56,7 @@ npm run lint
 
 | Command | Description |
 |---------|-------------|
-| `npm start` | Development server at `http://localhost:4200` |
+| `npm start` | Development server at `http://localhost:4209` |
 | `npm run build` | Production build to `dist/vending-app` |
 | `npm run build:prod` | Alias for production build with optimizations |
 | `npm test` | Run Karma/Jasmine unit tests |
@@ -167,7 +167,7 @@ vending-app/
 │           │   ├── app.config.ts            # Providers: router, HTTP, PrimeNG, ErrorHandler
 │           │   └── app.routes.ts            # Root route definitions
 │           ├── environments/
-│           │   ├── environment.ts           # Dev: apiUrl = http://localhost:5081
+│           │   ├── environment.ts           # Dev: API requests use the Angular proxy
 │           │   └── environment.prod.ts      # Prod: vending-api.clarivex.io
 │           ├── index.html                   # CSP meta tag, vpa-root host
 │           ├── main.ts                      # bootstrapApplication entry
@@ -197,7 +197,7 @@ correlationInterceptor → authInterceptor → retryInterceptor → loadingInter
 | Interceptor | What it does |
 |-------------|-------------|
 | `correlationInterceptor` | Adds `X-Correlation-Id: <uuid>` to every request for end-to-end tracing |
-| `authInterceptor` | Attaches `Authorization: Bearer <token>` to requests targeting `environment.apiUrl` |
+| `authInterceptor` | Attaches `Authorization: Bearer <token>` to API requests |
 | `retryInterceptor` | 30s timeout; retries up to 2x on 5xx/network errors with 1s backoff. Never retries 4xx. |
 | `loadingInterceptor` | Calls `LoadingService.show()` / `hide()` — drives the top loading bar automatically |
 | `errorInterceptor` | 401 → logout; 403 → log warning; 5xx → log error. Always re-throws for component handling. |
@@ -372,7 +372,7 @@ PrimeNG dark mode is toggled by adding the `.dark-mode` class to the document ro
 
 | File | Used when | `apiUrl` |
 |------|-----------|----------|
-| `environment.ts` | `ng serve` (development) | `http://localhost:5081` |
+| `environment.ts` | `ng serve` (development) | Same-origin `/api` requests proxied to `http://127.0.0.1:5080` |
 | `environment.prod.ts` | `ng build --configuration production` | `https://vending-api.clarivex.io` |
 
 Production browser requests go directly to the vending API. The API must allow the deployed UI origin in CORS; the current production allowlist includes `https://d2e3j8o6cbk70g.cloudfront.net`. The production Content Security Policy also allows connections to the API host.

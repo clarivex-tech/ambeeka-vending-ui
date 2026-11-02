@@ -11,14 +11,27 @@
     />
   </header>
 
+  <label class="pricing-search" for="pricing-search">
+    <i class="pi pi-search" aria-hidden="true"></i>
+    <input
+      id="pricing-search"
+      pInputText
+      type="search"
+      placeholder="Search by product name or system product ID"
+      [value]="searchTerm()"
+      (input)="setSearch($event)"
+    />
+  </label>
+
   @if (error(); as errorMessage) {
     <div class="pricing-state pricing-state--error" role="alert">
       <span [textContent]="errorMessage"></span>
       <p-button label="Retry" severity="secondary" (onClick)="loadItems()" />
     </div>
   } @else {
+    <div class="pricing-table-shell">
     <p-table
-      [value]="items()"
+      [value]="filteredItems()"
       [loading]="loading()"
       dataKey="id"
       [tableStyle]="{ 'min-width': '58rem' }"
@@ -61,10 +74,15 @@
       <ng-template #emptymessage>
         <tr>
           <td colspan="5" class="pricing-state">
-            No pricing items found. Add a pricing item to get started.
+            @if (searchTerm()) {
+              No pricing items match “{{ searchTerm() }}”. Try another search.
+            } @else {
+              No pricing items found. Add a pricing item to get started.
+            }
           </td>
         </tr>
       </ng-template>
     </p-table>
+    </div>
   }
 </section>

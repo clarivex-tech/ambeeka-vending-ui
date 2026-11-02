@@ -77,7 +77,7 @@ export class AppComponent {
 
   get menuItems() {
     const items = [
-      { label: 'Dashboard', icon: 'pi pi-home', routerLink: '/dashboard' },
+      { label: 'Dashboard', icon: 'pi pi-chart-bar', routerLink: '/dashboard' },
     ];
 
     if (this.auth.hasPermission('Admin')) {

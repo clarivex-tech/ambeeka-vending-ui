@@ -57,6 +57,14 @@
           <td>{{ item.createdAt | date: 'medium' }}</td>
           <td>
             <p-button
+              icon="pi pi-eye"
+              severity="secondary"
+              [text]="true"
+              [disabled]="deletingId() !== null || loading()"
+              [ariaLabel]="'View processing for ' + (item.displayName || item.fileName)"
+              [routerLink]="['/admin/weekly-billing/import', item.id, 'processing']"
+            />
+            <p-button
               icon="pi pi-trash"
               severity="danger"
               [text]="true"

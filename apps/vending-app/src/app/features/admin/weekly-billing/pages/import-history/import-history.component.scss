@@ -17,3 +17,9 @@
   .billing-page__header { align-items: flex-start; flex-direction: column; }
   .history-summary { align-items: flex-start; flex-direction: column; }
 }
+
+.billing-page { gap: clamp(1rem, 2vw, 1.5rem); }
+.billing-page__header h2 { font-size: clamp(1.5rem, 2.5vw, 2rem); letter-spacing: -0.03em; }
+.status-tag { padding: 0.3rem 0.65rem; background: var(--color-primary-light); color: var(--color-primary-dark); font-weight: 650; }
+.delete-error { border-radius: var(--radius-md); box-shadow: var(--shadow-sm); }
+.history-pagination { padding-top: var(--spacing-sm); }

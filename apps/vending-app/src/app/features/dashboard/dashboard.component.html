@@ -1,0 +1,124 @@
+<section class="billing-dashboard" aria-labelledby="dashboard-title">
+  <header class="dashboard-header">
+    <div>
+      <p class="dashboard-eyebrow">Overview</p>
+      <h1 id="dashboard-title">Weekly Settlement Dashboard</h1>
+      <p class="dashboard-subtitle">A quick look at POS imports, weekly calculations, and items that need attention.</p>
+    </div>
+    <div class="dashboard-actions">
+      <span class="all-time-label"><i class="pi pi-calendar" aria-hidden="true"></i> All time</span>
+      <p-button label="New import" icon="pi pi-upload" routerLink="/admin/weekly-billing/import" />
+    </div>
+  </header>
+
+  @if (error(); as message) {
+    <section class="dashboard-state dashboard-state--error" role="alert">
+      <i class="pi pi-exclamation-circle" aria-hidden="true"></i>
+      <div><strong>Dashboard unavailable</strong><p [textContent]="message"></p></div>
+      <p-button label="Try again" icon="pi pi-refresh" severity="secondary" [outlined]="true" [disabled]="loading()" (onClick)="load()" />
+    </section>
+  }
+
+  @if (loading() && !dashboard()) {
+    <div class="dashboard-state" role="status"><i class="pi pi-spin pi-spinner" aria-hidden="true"></i> Loading weekly settlement data…</div>
+  }
+
+  @if (dashboard(); as result) {
+    <section class="dashboard-metrics" aria-label="All-time billing metrics" [attr.aria-busy]="loading()">
+      <article class="dashboard-metric dashboard-metric--imports">
+        <span class="dashboard-metric__icon" aria-hidden="true"><i class="pi pi-file-import"></i></span>
+        <div><span class="dashboard-metric__label">POS imports</span><strong>{{ result.summary.importCount | number }}</strong><small>All imported workbooks</small></div>
+      </article>
+      <article class="dashboard-metric dashboard-metric--calculations">
+        <span class="dashboard-metric__icon" aria-hidden="true"><i class="pi pi-check-circle"></i></span>
+        <div><span class="dashboard-metric__label">Completed calculations</span><strong>{{ result.summary.completedCalculations | number }}</strong><small>Saved weekly snapshots</small></div>
+      </article>
+      <article class="dashboard-metric dashboard-metric--review">
+        <span class="dashboard-metric__icon" aria-hidden="true"><i class="pi pi-exclamation-circle"></i></span>
+        <div><span class="dashboard-metric__label">Needs review</span><strong>{{ result.summary.importsNeedingReview | number }}</strong><small>Imports needing decisions</small></div>
+      </article>
+      <article class="dashboard-metric dashboard-metric--vends">
+        <span class="dashboard-metric__icon" aria-hidden="true"><i class="pi pi-shopping-cart"></i></span>
+        <div><span class="dashboard-metric__label">Counted vends</span><strong>{{ result.summary.countedVends | number }}</strong><small>Across weekly calculations</small></div>
+      </article>
+      <article class="dashboard-metric dashboard-metric--excluded">
+        <span class="dashboard-metric__icon" aria-hidden="true"><i class="pi pi-ban"></i></span>
+        <div><span class="dashboard-metric__label">Excluded transactions</span><strong>{{ result.summary.excludedTransactionCount | number }}</strong><small>Excluded by the current rule</small></div>
+      </article>
+    </section>
+
+    <div class="dashboard-panels">
+      <section class="dashboard-panel" aria-labelledby="weekly-chart-title">
+        <header class="dashboard-panel__header">
+          <span class="dashboard-panel__icon" aria-hidden="true"><i class="pi pi-chart-bar"></i></span>
+          <div><h2 id="weekly-chart-title">Counted vends by POS week</h2><p>Latest saved calculation for each import</p></div>
+          <span class="dashboard-panel__period">Weekly</span>
+        </header>
+        @if (result.weeklyChart.length > 0) {
+          <div class="weekly-chart" role="img" [attr.aria-label]="'Counted vends by POS week: ' + result.weeklyChart.length + ' weeks'">
+            <div class="weekly-chart__axis" aria-hidden="true"><span>{{ maximumVends() | number }}</span><span>0</span></div>
+            <div class="weekly-chart__plot">
+              <div class="weekly-chart__grid" aria-hidden="true"><i></i><i></i><i></i><i></i></div>
+              <div class="weekly-chart__bars">
+                @for (week of result.weeklyChart; track week.weekStart + ':' + week.weekEnd) {
+                  <div class="weekly-chart__column" [attr.title]="weekLabel(week) + ': ' + (week.countedVends | number) + ' counted vends, ' + (week.excludedCount | number) + ' excluded'">
+                    <strong>{{ week.countedVends | number }}</strong>
+                    <span class="weekly-chart__bar" [class.weekly-chart__bar--latest]="$last" [style.height.%]="barHeight(week)"></span>
+                    <small>{{ week.weekStart | date: 'MMM d': 'UTC' }}</small>
+                  </div>
+                }
+              </div>
+            </div>
+          </div>
+          <footer class="weekly-chart__legend"><span><i></i>Counted vends</span><span>Excluded counts are available in each import’s details.</span></footer>
+        } @else {
+          <div class="dashboard-empty dashboard-empty--chart"><i class="pi pi-chart-bar" aria-hidden="true"></i><strong>No weekly calculations yet</strong><span>Upload and calculate a POS workbook to see weekly activity.</span></div>
+        }
+      </section>
+
+      <section class="dashboard-panel dashboard-health" aria-labelledby="import-health-title">
+        <header class="dashboard-panel__header">
+          <span class="dashboard-panel__icon" aria-hidden="true"><i class="pi pi-shield"></i></span>
+          <div><h2 id="import-health-title">Import health</h2><p>All-time processing status</p></div>
+        </header>
+        <div class="dashboard-health__total"><strong>{{ result.summary.importCount | number }}</strong><span>imports received</span></div>
+        <ul class="dashboard-health__list">
+          <li><span><i class="health-dot health-dot--complete"></i>Completed calculations</span><strong>{{ result.summary.completedCalculations | number }}</strong></li>
+          <li><span><i class="health-dot health-dot--review"></i>Imports needing review</span><strong>{{ result.summary.importsNeedingReview | number }}</strong></li>
+        </ul>
+        <a class="dashboard-text-link" routerLink="/admin/weekly-billing/imports">Open import history <i class="pi pi-arrow-right" aria-hidden="true"></i></a>
+      </section>
+    </div>
+
+    <section class="dashboard-panel dashboard-recent" aria-labelledby="recent-imports-title">
+      <header class="dashboard-panel__header dashboard-panel__header--table">
+        <span class="dashboard-panel__icon" aria-hidden="true"><i class="pi pi-list"></i></span>
+        <div><h2 id="recent-imports-title">Recent POS imports</h2><p>Latest 10 uploads. Open an import to see its saved processing data.</p></div>
+        <a class="dashboard-text-link" routerLink="/admin/weekly-billing/imports">View all imports <i class="pi pi-arrow-right" aria-hidden="true"></i></a>
+      </header>
+      @if (result.recentImports.length > 0) {
+        <div class="dashboard-table-wrap">
+          <table>
+            <thead><tr><th>Import / file</th><th>Employer</th><th>POS week</th><th>Imported</th><th>Counted</th><th>Excluded</th><th>Status</th><th>Action</th></tr></thead>
+            <tbody>
+              @for (item of result.recentImports; track item.importId) {
+                <tr>
+                  <td><strong class="file-name" [textContent]="item.fileName"></strong><small class="dashboard-cell-sub">{{ item.uploadDate | date: 'mediumDate' }}</small></td>
+                  <td>{{ item.employer || '—' }}</td>
+                  <td>{{ importWeekLabel(item) }}</td>
+                  <td>{{ item.importedCount | number }}</td>
+                  <td>{{ item.countedVends === null ? '—' : (item.countedVends | number) }}</td>
+                  <td>{{ item.excludedCount === null ? '—' : (item.excludedCount | number) }}</td>
+                  <td><span class="dashboard-status" [class.dashboard-status--review]="statusClass(item) === 'status-pill--review'" [class.dashboard-status--pending]="statusClass(item) === 'status-pill--pending'" [class.dashboard-status--complete]="statusClass(item) === 'status-pill--complete'"><i></i>{{ statusLabel(item) }}</span></td>
+                  <td><a class="dashboard-view-link" [routerLink]="['/admin/weekly-billing/import', item.importId, 'processing']">View processing</a></td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      } @else {
+        <div class="dashboard-empty"><i class="pi pi-inbox" aria-hidden="true"></i><strong>No POS imports yet</strong><span>Start by uploading your first weekly workbook.</span><p-button label="Import workbook" icon="pi pi-upload" routerLink="/admin/weekly-billing/import" /></div>
+      }
+    </section>
+  }
+</section>

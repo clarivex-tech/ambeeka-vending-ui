@@ -1,7 +1,8 @@
 import { CurrencyPipe, DatePipe } from '@angular/common';
-import { ChangeDetectionStrategy, Component, inject, OnInit, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject, OnInit, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { ButtonModule } from 'primeng/button';
+import { InputTextModule } from 'primeng/inputtext';
 import { TableModule } from 'primeng/table';
 import { ConfirmDialogService } from '../../../../../shared/services/confirm-dialog.service';
 import { NotificationService } from '../../../../../core/services/notification.service';
@@ -11,7 +12,7 @@ import { PricingService } from '../../services/pricing.service';
 @Component({
   selector: 'vpa-pricing-list',
   standalone: true,
-  imports: [CurrencyPipe, DatePipe, RouterLink, ButtonModule, TableModule],
+  imports: [CurrencyPipe, DatePipe, RouterLink, ButtonModule, InputTextModule, TableModule],
   templateUrl: './pricing-list.component.html',
   styleUrl: './pricing-list.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -22,6 +23,16 @@ export class PricingListComponent implements OnInit {
   private readonly notifications = inject(NotificationService);
 
   readonly items = signal<PricingItem[]>([]);
+  readonly searchTerm = signal('');
+  readonly filteredItems = computed(() => {
+    const query = this.searchTerm().trim().toLocaleLowerCase();
+    if (!query) return this.items();
+
+    return this.items().filter((item) =>
+      [item.systemProductId, item.systemProductName, item.productName]
+        .some((value) => value.toLocaleLowerCase().includes(query)),
+    );
+  });
   readonly loading = signal(true);
   readonly error = signal<string | null>(null);
   readonly deletingId = signal<string | null>(null);
@@ -43,6 +54,10 @@ export class PricingListComponent implements OnInit {
         this.loading.set(false);
       },
     });
+  }
+
+  setSearch(event: Event): void {
+    this.searchTerm.set((event.target as HTMLInputElement).value);
   }
 
   async deleteItem(item: PricingItem): Promise<void> {

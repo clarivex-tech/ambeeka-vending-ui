@@ -1,4 +1,6 @@
 @use 'primeicons/primeicons.css';
+@use './app/features/dashboard/dashboard.component' as dashboard;
+@use './app/features/admin/weekly-billing/pages/import-processing/processing-view' as processingView;
 
 /* CSS Reset */
 *,
@@ -20,6 +22,8 @@ body {
   font-family: var(--font-family-base);
   font-size: 16px;
   line-height: 1.5;
+  color: var(--color-text);
+  background: var(--color-bg);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
@@ -40,25 +44,43 @@ select {
   font: inherit;
 }
 
+button,
+a,
+input,
+select,
+textarea,
+[tabindex]:not([tabindex='-1']) {
+  &:focus-visible {
+    outline: 3px solid color-mix(in srgb, var(--color-primary) 38%, transparent);
+    outline-offset: 2px;
+  }
+}
+
 /* Design Tokens */
 :root {
-  --color-primary: #3b82f6;
-  --color-primary-dark: #2563eb;
-  --color-primary-light: #93c5fd;
-  --color-secondary: #64748b;
-  --color-success: #22c55e;
-  --color-warning: #f59e0b;
-  --color-danger: #ef4444;
+  --color-primary: #00685f;
+  --color-primary-dark: #00524c;
+  --color-primary-light: #e5f5f2;
+  --color-secondary: #53686d;
+  --color-success: #16734f;
+  --color-warning: #8a5b0a;
+  --color-danger: #a32c36;
+  --color-info: #245a8d;
 
-  --color-bg: #ffffff;
-  --color-surface: #f9fafb;
-  --color-border: #e5e7eb;
-  --color-text: #1f2937;
-  --color-text-muted: #6b7280;
+  --color-bg: #f5f8fa;
+  --color-surface: #ffffff;
+  --color-surface-muted: #eef3f4;
+  --color-border: #dce5e8;
+  --color-text: #152b35;
+  --color-text-muted: #60727b;
+  --color-error: #a32c36;
+  --color-error-bg: #fff0f0;
+  --color-success-bg: #eef9f3;
+  --color-warning-bg: #fff5df;
 
   --font-family-base: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto,
     Oxygen, Ubuntu, Cantarell, sans-serif;
-  --font-family-mono: 'Fira Code', 'Cascadia Code', Consolas, monospace;
+  --font-family-mono: 'Cascadia Code', Consolas, 'Courier New', monospace;
 
   --spacing-xs: 0.25rem;
   --spacing-sm: 0.5rem;
@@ -67,14 +89,14 @@ select {
   --spacing-xl: 2rem;
   --spacing-2xl: 3rem;
 
-  --radius-sm: 0.25rem;
-  --radius-md: 0.5rem;
-  --radius-lg: 0.75rem;
+  --radius-sm: 0.5rem;
+  --radius-md: 0.75rem;
+  --radius-lg: 0.875rem;
   --radius-full: 9999px;
 
-  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.05);
-  --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.1);
-  --shadow-lg: 0 10px 15px rgba(0, 0, 0, 0.1);
+  --shadow-sm: 0 1px 3px rgba(21, 43, 53, 0.05);
+  --shadow-md: 0 4px 12px rgba(21, 43, 53, 0.07);
+  --shadow-lg: 0 16px 36px rgba(21, 43, 53, 0.12);
 
   /* Responsive breakpoints (mobile-first) */
   --breakpoint-sm: 640px;
@@ -87,19 +109,24 @@ select {
 /* Dark Mode — custom design tokens */
 @media (prefers-color-scheme: dark) {
   :root {
-    --color-primary: #60a5fa;
-    --color-primary-dark: #3b82f6;
-    --color-primary-light: #1d4ed8;
-    --color-secondary: #94a3b8;
-    --color-success: #4ade80;
-    --color-warning: #fbbf24;
-    --color-danger: #f87171;
+    --color-primary: #70d2c6;
+    --color-primary-dark: #91e0d7;
+    --color-primary-light: #174b47;
+    --color-secondary: #a9bec2;
+    --color-success: #64d2a0;
+    --color-warning: #f6c76f;
+    --color-danger: #ff929a;
 
-    --color-bg: #0f172a;
-    --color-surface: #1e293b;
-    --color-border: #334155;
-    --color-text: #f1f5f9;
-    --color-text-muted: #94a3b8;
+    --color-bg: #101d22;
+    --color-surface: #192a30;
+    --color-surface-muted: #24383e;
+    --color-border: #344a50;
+    --color-text: #eff7f7;
+    --color-text-muted: #a9bec2;
+    --color-error: #ff929a;
+    --color-error-bg: #40272c;
+    --color-success-bg: #1d3830;
+    --color-warning-bg: #3c3422;
 
     --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.3);
     --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.4);
@@ -129,6 +156,35 @@ select {
 .app-container {
   min-height: 100vh;
 }
+
+:where(.billing-page, .pricing-page, .pricing-form-page) {
+  max-width: 1440px;
+  margin-inline: auto;
+}
+
+.p-datatable .p-datatable-thead > tr > th {
+  background: var(--color-surface-muted);
+  color: var(--color-text-muted);
+  font-size: 0.8rem;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.p-datatable .p-datatable-tbody > tr > td {
+  color: var(--color-text);
+  vertical-align: middle;
+}
+
+.p-datatable .p-datatable-tbody > tr:hover { background: var(--color-primary-light); }
+
+.p-inputtext,
+.p-inputnumber-input,
+input[pInputText] {
+  border-radius: var(--radius-sm);
+}
+
+.p-inputnumber,
+.p-inputnumber-input { width: 100%; }
 
 
 

@@ -1,28 +1,264 @@
-.billing-page { display: grid; gap: 1rem; }
-.billing-page__header h2, .billing-card h3, .billing-card h4 { margin: 0; }
-.billing-page__header p, .muted { color: var(--color-text-muted, #666); }
-.billing-back, .result-actions a { color: var(--color-primary, #2563eb); text-decoration: none; }
-.workflow-steps { display: grid; grid-template-columns: repeat(3, 1fr); gap: .75rem; margin: 0; padding: 0; list-style: none; }
-.workflow-steps li { padding: .65rem; border: 1px solid var(--color-border, #ddd); border-radius: 6px; }
-.workflow-step--active { border-color: var(--color-primary, #2563eb) !important; color: var(--color-text, #222) !important; font-weight: 700; }
-.workflow-step--active span, .workflow-step--done span { background: var(--color-primary, #2563eb); color: white; }
-.billing-card { display: grid; gap: .75rem; padding: 1.25rem; border: 1px solid var(--color-border, #ddd); border-radius: 8px; background: var(--color-surface, #fff); }
-.scope-card { grid-template-columns: 1fr 1fr; align-items: end; }
-.scope-fields { display: grid; grid-template-columns: auto 1fr; align-items: center; gap: .5rem; }
-.scope-fields input, .scope-fields select, .decision-controls select, #workbook-display-name, #calculation-name { min-height: 2.5rem; padding: .5rem; border: 1px solid var(--color-border, #ddd); border-radius: 4px; background: var(--color-surface, #fff); color: var(--color-text, #222); }
-.decision-controls select { flex: 1 1 22rem; }
-.import-acknowledgement { border-color: var(--color-success, #15803d); }
-.validation-grid, .issue-details { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: .75rem; margin: 0; }
-.billing-alert { padding: .6rem; border: 1px solid #b91c1c; border-radius: 4px; }
-.section-heading, .issue-card__header, .review-actions, .result-actions { display: flex; justify-content: space-between; gap: 1rem; }
-.pricing-warning { display: grid; gap: .25rem; padding: .75rem; border: 1px solid #d97706; border-radius: 6px; background: #fff7ed; color: #7c2d12; }
-.review-summary, .suggestions, .decision-controls, .result-actions { display: flex; flex-wrap: wrap; gap: .5rem; }
-.review-clear { padding: .75rem; border-radius: 6px; background: #f0fdf4; color: #166534; }
-.issue-list, .issue-card, .week-summary { display: grid; gap: .65rem; }
-.issue-card, .week-summary { padding: .85rem; border: 1px solid var(--color-border, #ddd); border-radius: 6px; }
-.issue-details { grid-template-columns: repeat(4, minmax(0, 1fr)); }
-.billing-summary { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: .75rem; }
-.weekly-results { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: .65rem; }
-@media (max-width: 800px) { .scope-card { grid-template-columns: 1fr; } .issue-details { grid-template-columns: repeat(2, minmax(0, 1fr)); } .weekly-results { grid-template-columns: 1fr; } }
-@media (max-width: 600px) { .workflow-steps, .scope-fields { grid-template-columns: 1fr; } .section-heading, .issue-card__header, .review-actions { flex-direction: column; } .decision-controls select { flex-basis: 100%; } .billing-summary { grid-template-columns: repeat(2, minmax(0, 1fr)); } .preview-readiness { flex-direction: column; } }
-@media (max-width: 420px) { .issue-details, .billing-summary { grid-template-columns: 1fr; } }
+.billing-page {
+  display: grid;
+  gap: clamp(1rem, 2vw, 1.5rem);
+  width: 100%;
+}
+
+.billing-page__header h2,
+.billing-card h3,
+.billing-card h4 { margin: 0; }
+
+.billing-page__header h2 {
+  color: var(--color-text);
+  font-size: clamp(1.5rem, 2.5vw, 2rem);
+  letter-spacing: -0.03em;
+}
+
+.billing-page__header p,
+.muted { color: var(--color-text-muted); }
+
+.billing-back,
+.result-actions a {
+  color: var(--color-primary);
+  text-decoration: none;
+  font-weight: 600;
+}
+
+.billing-back:hover,
+.result-actions a:hover { color: var(--color-primary-dark); }
+
+.workflow-steps {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--spacing-sm);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.workflow-steps li {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  min-height: 3.25rem;
+  padding: 0.65rem 0.9rem;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-surface);
+  color: var(--color-text-muted);
+  font-size: 0.92rem;
+  font-weight: 600;
+}
+
+.workflow-steps li span {
+  display: inline-grid;
+  flex: 0 0 1.7rem;
+  width: 1.7rem;
+  height: 1.7rem;
+  place-items: center;
+  border-radius: 50%;
+  background: var(--color-surface-muted);
+  color: var(--color-text-muted);
+  font-size: 0.8rem;
+}
+
+.workflow-step--active {
+  border-color: var(--color-primary) !important;
+  color: var(--color-text) !important;
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--color-primary) 12%, transparent);
+}
+
+.workflow-step--active span,
+.workflow-step--done span { background: var(--color-primary); color: #fff; }
+
+.upload-context-grid { display: grid; gap: var(--spacing-md); }
+
+.billing-card {
+  display: grid;
+  align-content: start;
+  gap: var(--spacing-md);
+  min-width: 0;
+  padding: clamp(1rem, 2vw, 1.5rem);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  background: var(--color-surface);
+  box-shadow: var(--shadow-sm);
+}
+
+.billing-card > h3,
+.billing-card h4 { color: var(--color-text); }
+
+.billing-card label,
+.calculation-name-field label { color: var(--color-text); font-weight: 650; }
+
+#transactions-file {
+  width: 100%;
+  padding: var(--spacing-md);
+  border: 1px dashed color-mix(in srgb, var(--color-primary) 48%, var(--color-border));
+  border-radius: var(--radius-md);
+  background: color-mix(in srgb, var(--color-primary-light) 35%, var(--color-surface));
+}
+
+#workbook-display-name,
+#calculation-name,
+.decision-controls select {
+  min-height: 2.75rem;
+  padding: 0.625rem 0.75rem;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  background: var(--color-surface);
+  color: var(--color-text);
+}
+
+.upload-context-grid .billing-alert,
+.billing-alert {
+  padding: 0.85rem 1rem;
+  border: 1px solid color-mix(in srgb, var(--color-error) 35%, var(--color-border));
+  border-radius: var(--radius-md);
+  background: var(--color-error-bg);
+  color: var(--color-error);
+}
+
+.duplicate-import { border-color: color-mix(in srgb, var(--color-warning) 50%, var(--color-border)); }
+.import-acknowledgement { border-color: color-mix(in srgb, var(--color-success) 42%, var(--color-border)); }
+
+.validation-grid,
+.issue-details {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--spacing-md);
+  margin: 0;
+}
+
+.validation-grid > div,
+.issue-details > div {
+  min-width: 0;
+  padding: 0.75rem;
+  border-radius: var(--radius-sm);
+  background: var(--color-surface-muted);
+}
+
+.validation-grid dt,
+.issue-details dt { color: var(--color-text-muted); font-size: 0.8rem; }
+.validation-grid dd,
+.issue-details dd { margin: 0.2rem 0 0; overflow-wrap: anywhere; font-weight: 600; }
+.file-name { overflow-wrap: anywhere; }
+.import-id { overflow-wrap: anywhere; font-family: var(--font-family-mono); font-size: 0.88em; }
+
+.import-ignored-rows,
+.excluded-rows { display: grid; gap: var(--spacing-sm); min-width: 0; }
+.import-ignored-rows h4,
+.excluded-rows h4 { margin: 0; font-size: 1rem; }
+
+.section-heading,
+.issue-card__header,
+.review-actions,
+.result-actions {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--spacing-md);
+}
+
+.section-heading > div { display: grid; gap: var(--spacing-xs); }
+.calculation-name-field { display: grid; gap: var(--spacing-xs); max-width: 38rem; }
+
+.pricing-warning {
+  display: grid;
+  gap: 0.35rem;
+  padding: 0.9rem 1rem;
+  border: 1px solid #ecd49a;
+  border-radius: var(--radius-md);
+  background: var(--color-warning-bg);
+  color: #634808;
+}
+
+.review-summary,
+.suggestions,
+.decision-controls,
+.result-actions { display: flex; flex-wrap: wrap; align-items: center; gap: var(--spacing-sm); }
+
+.review-summary > span {
+  padding: 0.5rem 0.75rem;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-full);
+  background: var(--color-surface-muted);
+  color: var(--color-text-muted);
+  font-size: 0.88rem;
+}
+
+.review-summary strong { color: var(--color-text); }
+.review-clear { padding: 1rem; border-radius: var(--radius-md); background: var(--color-success-bg); color: var(--color-success); }
+.week-summary { display: grid; gap: var(--spacing-md); min-width: 0; padding: 1rem; border: 1px solid var(--color-border); border-radius: var(--radius-md); background: var(--color-surface); }
+.issue-details { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.suggestions span { padding: 0.4rem 0.65rem; border-radius: var(--radius-full); background: var(--color-primary-light); color: var(--color-primary-dark); font-size: 0.88rem; }
+
+.decision-status {
+  display: inline-flex;
+  align-items: center;
+  width: fit-content;
+  padding: 0.35rem 0.7rem;
+  border-radius: var(--radius-full);
+  background: var(--color-success-bg);
+  color: var(--color-success);
+  font-size: 0.82rem;
+  font-weight: 700;
+}
+
+.decision-status--pending { background: var(--color-warning-bg); color: var(--color-warning); }
+.decision-status--ignored { background: var(--color-surface-muted); color: var(--color-secondary); }
+.review-actions { align-items: center; padding-top: var(--spacing-md); border-top: 1px solid var(--color-border); }
+.review-actions > p { max-width: 55rem; margin: 0; }
+
+.billing-state { padding: var(--spacing-lg); color: var(--color-text-muted); text-align: center; }
+.pending-value { color: var(--color-warning) !important; }
+.weekly-results { display: grid; grid-template-columns: minmax(0, 1fr); gap: var(--spacing-md); }
+.week-summary { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.week-summary > header,
+.week-summary > .unmatched-note,
+.week-summary > .excluded-rows { grid-column: 1 / -1; }
+.week-summary > div { grid-column: 1; }
+.week-summary > strong { grid-column: 2; align-self: center; text-align: right; }
+.week-summary > header { display: flex; align-items: center; justify-content: space-between; gap: var(--spacing-md); }
+.week-summary > header span { color: var(--color-primary); font-weight: 700; }
+.week-summary > div { display: flex; flex-wrap: wrap; gap: var(--spacing-md); color: var(--color-text-muted); }
+.excluded-rows { grid-column: 1 / -1; width: 100%; min-width: 0; }
+
+.table-scroll { width: 100%; max-width: 100%; min-width: 0; overflow-x: auto; border: 1px solid var(--color-border); border-radius: var(--radius-sm); }
+.table-scroll table { width: 100%; border-collapse: collapse; font-size: 0.9rem; }
+.table-scroll th,
+.table-scroll td { padding: 0.7rem 0.8rem; border-bottom: 1px solid var(--color-border); text-align: left; vertical-align: top; }
+.table-scroll th { background: var(--color-surface-muted); color: var(--color-text-muted); font-size: 0.78rem; font-weight: 700; white-space: nowrap; }
+.table-scroll tr:last-child td { border-bottom: 0; }
+.excluded-rows table { width: 100%; min-width: 72rem; table-layout: auto; }
+
+@media (min-width: 1100px) {
+  .upload-context-grid { grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr); align-items: start; }
+  .import-upload-card { grid-column: 1; grid-row: 1 / span 5; }
+  .upload-context-grid > :not(.import-upload-card) { grid-column: 2; }
+}
+
+@media (max-width: 900px) {
+  .validation-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+
+@media (max-width: 650px) {
+  .workflow-steps { grid-template-columns: 1fr; gap: var(--spacing-xs); }
+  .workflow-steps li { min-height: 2.75rem; }
+  .section-heading,
+  .issue-card__header,
+  .review-actions,
+  .result-actions,
+  .week-summary > header { align-items: flex-start; flex-direction: column; }
+  .decision-controls { align-items: stretch; }
+  .decision-controls select { flex-basis: 100%; min-width: 100%; }
+  .validation-grid,
+  .issue-details { grid-template-columns: 1fr; }
+  .week-summary { grid-template-columns: minmax(0, 1fr); }
+  .week-summary > header,
+  .week-summary > div,
+  .week-summary > strong,
+  .week-summary > .unmatched-note,
+  .week-summary > .excluded-rows { grid-column: 1; }
+  .week-summary > strong { text-align: left; }
+}

@@ -1,11 +1,15 @@
 import { CurrencyPipe, DatePipe, DecimalPipe } from '@angular/common';
 import { HttpErrorResponse } from '@angular/common/http';
 import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
-import { RouterLink } from '@angular/router';
+import { ActivatedRoute, RouterLink } from '@angular/router';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ButtonModule } from 'primeng/button';
 import { WeeklyBillingNavComponent } from '../../components/weekly-billing-nav/weekly-billing-nav.component';
 import {
   BillingCalculationResponse,
+  AppliedPricingResolution,
+  ImportProcessingDetails,
+  ImportIgnoredRow,
   PricingProductOption,
   PricingResolution,
   PricingReviewIssue,
@@ -33,23 +37,19 @@ interface ExistingImportInfo {
 })
 export class ImportProcessingComponent {
   private readonly billing = inject(WeeklyBillingService);
+  private readonly route = inject(ActivatedRoute);
   private reviewRequestId = 0;
   readonly file = signal<File | null>(null);
   readonly displayName = signal('');
   readonly validation = signal<WorkbookImportResult | null>(null);
   readonly validationIssues = signal<string[]>([]);
   readonly existingImport = signal<ExistingImportInfo | null>(null);
-  readonly existingPricingReview = signal<PricingReviewResponse | null>(null);
   readonly review = signal<PricingReviewResponse | null>(null);
-  readonly reviewScopeLoaded = signal(false);
+  readonly reviewLoaded = signal(false);
   readonly resolutions = signal<Record<string, PricingResolution>>({});
   readonly calculation = signal<BillingCalculationResponse | null>(null);
   readonly step = signal<1 | 2 | 3>(1);
-  readonly month = signal(this.currentMonth());
-  readonly employers = ['Warren Valve'];
-  readonly employer = signal(this.employers[0]);
-  readonly calculationName = signal(this.defaultCalculationName());
-  private calculationNameEdited = false;
+  readonly calculationName = signal('');
   readonly validating = signal(false);
   readonly reviewLoading = signal(false);
   readonly calculating = signal(false);
@@ -57,6 +57,84 @@ export class ImportProcessingComponent {
   readonly reviewError = signal<string | null>(null);
   readonly calculationError = signal<string | null>(null);
   readonly fileError = signal<string | null>(null);
+  readonly readOnlyView = signal(false);
+  readonly savedProcessingLoading = signal(false);
+  readonly savedProcessingError = signal<string | null>(null);
+  readonly savedImportedRowCount = signal<number | null>(null);
+  readonly savedCalculationCount = signal(0);
+  readonly savedResolutionNames = signal<Record<string, string>>({});
+  readonly savedAppliedResolutions = signal<AppliedPricingResolution[]>([]);
+
+  constructor() {
+    this.route.paramMap.pipe(takeUntilDestroyed()).subscribe((params) => {
+      const importId = params.get('importId');
+      if (importId) this.loadSavedProcessing(importId);
+    });
+  }
+
+  private loadSavedProcessing(importId: string): void {
+    this.readOnlyView.set(true);
+    this.savedProcessingLoading.set(true);
+    this.savedProcessingError.set(null);
+    this.billing.getImportProcessing(importId).subscribe({
+      next: (details) => this.restoreSavedProcessing(importId, details),
+      error: (failure: unknown) => {
+        const body = this.responseBody(failure);
+        this.savedProcessingError.set(this.optionalString(body?.message)
+          ?? 'Could not load the saved processing details for this import.');
+        this.savedProcessingLoading.set(false);
+      },
+    });
+  }
+
+  reloadSavedProcessing(): void {
+    const importId = this.route.snapshot.paramMap.get('importId');
+    if (importId) this.loadSavedProcessing(importId);
+  }
+
+  private restoreSavedProcessing(importId: string, details: ImportProcessingDetails): void {
+    const imported = details.import;
+    const appliedResolutions = details.latestCalculation?.result.appliedResolutions ?? [];
+    const resolutions: Record<string, PricingResolution> = {};
+    const resolutionNames: Record<string, string> = {};
+
+    for (const applied of appliedResolutions) {
+      const key = `${applied.importId || importId}:${applied.sourceRowNumber}`;
+      if (applied.action === 'Ignore') {
+        resolutions[key] = { sourceRowNumber: applied.sourceRowNumber, action: 'Ignore' };
+      } else if (applied.productId) {
+        resolutions[key] = { sourceRowNumber: applied.sourceRowNumber, action: 'Map', productId: applied.productId };
+        if (applied.productName) resolutionNames[key] = applied.productName;
+      }
+    }
+
+    this.validation.set({
+      ...imported,
+      id: imported.id || imported.importId || importId,
+      ignoredRows: details.ignoredRows ?? imported.ignoredRows ?? null,
+    });
+    this.displayName.set(imported.displayName ?? '');
+    this.savedImportedRowCount.set(details.importedRows?.length ?? null);
+    this.savedCalculationCount.set(details.calculations?.length ?? (details.latestCalculation ? 1 : 0));
+    this.savedResolutionNames.set(resolutionNames);
+    this.savedAppliedResolutions.set(appliedResolutions);
+    this.review.set(details.pricingReview ?? null);
+    this.reviewLoaded.set(details.pricingReview != null);
+    this.resolutions.set(resolutions);
+    this.calculation.set(details.latestCalculation);
+    this.calculationName.set(details.latestCalculation?.calculationName ?? '');
+    this.step.set(details.latestCalculation ? 3 : 2);
+    this.savedProcessingLoading.set(false);
+  }
+
+  savedDecisionLabel(issue: PricingReviewIssue): string {
+    const decision = this.resolution(issue);
+    if (!decision) return 'No saved decision';
+    if (decision.action === 'Ignore') return 'Ignored in saved calculation';
+    const name = this.savedResolutionNames()[this.issueKey(issue)]
+      ?? this.allProducts().find((product) => product.productId === decision.productId)?.productName;
+    return name ? `Mapped to ${name}` : 'Mapped to a catalog product';
+  }
 
   rowCountEntries(): [string, number][] {
     return Object.entries(this.validation()?.rowCounts ?? {});
@@ -70,7 +148,8 @@ export class ImportProcessingComponent {
     this.validation.set(null);
     this.validationIssues.set([]);
     this.existingImport.set(null);
-    this.existingPricingReview.set(null);
+    this.review.set(null);
+    this.calculationName.set('');
     this.error.set(null);
     this.fileError.set(null);
     if (!selected) return;
@@ -86,26 +165,12 @@ export class ImportProcessingComponent {
     }
   }
 
-  setMonth(event: Event): void {
-    const value = (event.target as HTMLInputElement).value;
-    this.month.set(value);
-    this.updateDefaultCalculationName();
-    this.scopeChanged();
-  }
-
-  setEmployer(event: Event): void {
-    this.employer.set((event.target as HTMLSelectElement).value);
-    this.updateDefaultCalculationName();
-    this.scopeChanged();
-  }
-
   setDisplayName(event: Event): void {
     this.displayName.set((event.target as HTMLInputElement).value);
   }
 
   setCalculationName(event: Event): void {
     this.calculationName.set((event.target as HTMLInputElement).value);
-    this.calculationNameEdited = true;
   }
 
   validate(): void {
@@ -115,7 +180,7 @@ export class ImportProcessingComponent {
     this.error.set(null);
     this.validationIssues.set([]);
     this.existingImport.set(null);
-    this.existingPricingReview.set(null);
+    this.review.set(null);
     this.billing.validateWorkbook(selected, this.displayName()).subscribe({
       next: (result) => {
         this.validation.set(result);
@@ -138,9 +203,6 @@ export class ImportProcessingComponent {
             createdAt: this.optionalString(body?.createdAt),
           });
           this.step.set(2);
-          this.billing.getImportPricingReview(existingImportId).subscribe({
-            next: (review) => this.existingPricingReview.set(review),
-          });
           this.loadPricingReview();
         }
         const serverMessage = this.optionalString(body?.message);
@@ -154,11 +216,10 @@ export class ImportProcessingComponent {
 
   loadPricingReview(): void {
     const requestId = ++this.reviewRequestId;
-    this.reviewScopeLoaded.set(false);
-    const month = this.month();
-    const employer = this.employer().trim();
-    if (!month || !employer) {
-      this.reviewError.set('Choose a billing month and employer to check pricing review rows.');
+    this.reviewLoaded.set(false);
+    const importId = this.currentImportId();
+    if (!importId) {
+      this.reviewError.set('The workbook import ID is missing, so its pricing rows cannot be reviewed.');
       this.reviewLoading.set(false);
       return;
     }
@@ -166,18 +227,18 @@ export class ImportProcessingComponent {
     this.reviewError.set(null);
     this.calculationError.set(null);
     this.calculation.set(null);
-    this.billing.getPricingReview(month, employer).subscribe({
+    this.billing.getImportPricingReview(importId).subscribe({
       next: (review) => {
         if (requestId !== this.reviewRequestId) return;
         this.review.set(review);
-        this.reviewScopeLoaded.set(true);
+        this.reviewLoaded.set(true);
         this.reviewLoading.set(false);
       },
       error: (failure: unknown) => {
         if (requestId !== this.reviewRequestId) return;
-        this.reviewScopeLoaded.set(false);
+        this.reviewLoaded.set(false);
         const message = this.optionalString(this.responseBody(failure)?.message);
-        this.reviewError.set(message ?? 'Could not load pricing review rows for this month and employer.');
+        this.reviewError.set(message ?? 'Could not load pricing review rows for this workbook.');
         this.reviewLoading.set(false);
       },
     });
@@ -193,7 +254,7 @@ export class ImportProcessingComponent {
     }
     this.resolutions.update((current) => ({
       ...current,
-      [key]: { importId: issue.importId, sourceRowNumber: issue.sourceRowNumber, action: 'Map', productId },
+      [key]: { sourceRowNumber: issue.sourceRowNumber, action: 'Map', productId },
     }));
   }
 
@@ -201,7 +262,7 @@ export class ImportProcessingComponent {
     const key = this.issueKey(issue);
     this.resolutions.update((current) => ({
       ...current,
-      [key]: { importId: issue.importId, sourceRowNumber: issue.sourceRowNumber, action: 'Ignore' },
+      [key]: { sourceRowNumber: issue.sourceRowNumber, action: 'Ignore' },
     }));
   }
 
@@ -218,8 +279,22 @@ export class ImportProcessingComponent {
     return resolution?.action === 'Map' ? resolution.productId : '';
   }
 
-  appliedResolutionCount(calculation: BillingCalculationResponse): number {
-    return calculation.result.appliedResolutions?.length ?? 0;
+  totalExcludedTransactions(calculation: BillingCalculationResponse): number {
+    return calculation.result.weeks.reduce(
+      (total, week) => total + (week.rowsExcludedForNonpositiveNetPrice ?? 0),
+      0,
+    );
+  }
+
+  importIgnoredRowReason(row: ImportIgnoredRow): string {
+    if (row.reasonCode === 'ProductInfoAndSettlementTimeBlank') {
+      return row.reason || 'Product information and settlement time are blank';
+    }
+    return row.reason || 'Reason unavailable';
+  }
+
+  excludedRowReason(reason: string): string {
+    return reason === 'NonpositiveNetPrice' ? 'Nonpositive net price' : reason;
   }
 
   issueKey(issue: PricingReviewIssue): string {
@@ -240,8 +315,19 @@ export class ImportProcessingComponent {
     return this.review()?.availableProducts ?? this.validation()?.pricingReview?.availableProducts ?? [];
   }
 
+  private currentImportId(): string {
+    return this.validation()?.id
+      || this.validation()?.importId
+      || this.existingImport()?.existingImportId
+      || '';
+  }
+
   resolvedCount(): number {
     return this.review()?.issues.filter((issue) => this.resolution(issue) !== undefined).length ?? 0;
+  }
+
+  savedResolutionCount(): number {
+    return Object.keys(this.resolutions()).length;
   }
 
   ignoredCount(): number {
@@ -251,10 +337,8 @@ export class ImportProcessingComponent {
   canCalculate(): boolean {
     const review = this.review();
     return !!review
-      && (!!this.validation() || !!this.existingImport())
-      && this.reviewScopeLoaded()
-      && !!this.month()
-      && !!this.employer().trim()
+      && !!this.currentImportId()
+      && this.reviewLoaded()
       && !this.reviewLoading()
       && !this.calculating()
       && this.resolvedCount() === review.issues.length;
@@ -262,9 +346,8 @@ export class ImportProcessingComponent {
 
   calculate(): void {
     const review = this.review();
-    const month = this.month();
-    const employer = this.employer().trim();
-    if (!review || !this.canCalculate() || !month || !employer) return;
+    const importId = this.currentImportId();
+    if (!review || !this.canCalculate() || !importId) return;
 
     const resolutions = review.issues
       .map((issue) => this.resolution(issue))
@@ -272,7 +355,7 @@ export class ImportProcessingComponent {
     this.calculating.set(true);
     this.calculationError.set(null);
     const calculationName = this.calculationName().trim();
-    this.billing.createCalculationPreview(month, employer, resolutions, calculationName).subscribe({
+    this.billing.createImportCalculation(importId, resolutions, calculationName).subscribe({
       next: (calculation) => {
         this.calculation.set(calculation);
         this.step.set(3);
@@ -294,27 +377,16 @@ export class ImportProcessingComponent {
     this.validation.set(null);
     this.validationIssues.set([]);
     this.existingImport.set(null);
-    this.existingPricingReview.set(null);
     this.review.set(null);
-    this.reviewScopeLoaded.set(false);
+    this.reviewLoaded.set(false);
     this.resolutions.set({});
     this.calculation.set(null);
     this.error.set(null);
     this.reviewError.set(null);
     this.calculationError.set(null);
     this.fileError.set(null);
-    this.calculationNameEdited = false;
-    this.calculationName.set(this.defaultCalculationName());
+    this.calculationName.set('');
     this.step.set(1);
-  }
-
-  private scopeChanged(): void {
-    this.review.set(null);
-    this.reviewScopeLoaded.set(false);
-    this.calculation.set(null);
-    this.calculationError.set(null);
-    if (this.step() === 3) this.step.set(2);
-    if (this.step() >= 2 && (this.validation() || this.existingImport())) this.loadPricingReview();
   }
 
   private mergeApiIssues(body: Record<string, unknown> | null): void {
@@ -331,8 +403,7 @@ export class ImportProcessingComponent {
       ? body.availableProducts as PricingProductOption[]
       : current?.availableProducts ?? [];
     this.review.set({
-      month: current?.month ?? this.month(),
-      employer: current?.employer ?? this.employer(),
+      importId: current?.importId ?? this.currentImportId(),
       transactionsReviewed: current?.transactionsReviewed ?? mergedIssues.size,
       rowsNeedingReview: mergedIssues.size,
       issues: [...mergedIssues.values()],
@@ -381,20 +452,4 @@ export class ImportProcessingComponent {
     return typeof value === 'string' ? value : undefined;
   }
 
-  private currentMonth(): string {
-    const now = new Date();
-    return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
-  }
-
-  private defaultCalculationName(): string {
-    const month = this.month();
-    if (!/^\d{4}-\d{2}$/.test(month)) return `${this.employer()} · Billing`;
-    const date = new Date(`${month}-01T12:00:00`);
-    const period = new Intl.DateTimeFormat('en-US', { month: 'short', year: 'numeric' }).format(date);
-    return `${this.employer()} · ${period}`;
-  }
-
-  private updateDefaultCalculationName(): void {
-    if (!this.calculationNameEdited) this.calculationName.set(this.defaultCalculationName());
-  }
 }

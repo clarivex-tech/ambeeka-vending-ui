@@ -22,6 +22,7 @@ import { provideHttpClient, withInterceptors } from '@angular/common/http';
 import { provideAnimationsAsync } from '@angular/platform-browser/animations/async';
 import { providePrimeNG } from 'primeng/config';
 import Aura from '@primeng/themes/aura';
+import { definePreset } from '@primeng/themes';
 
 
 import { appRoutes } from './app.routes';
@@ -31,6 +32,50 @@ import { correlationInterceptor } from './core/interceptors/correlation.intercep
 import { errorInterceptor } from './core/interceptors/error.interceptor';
 import { loadingInterceptor } from './core/interceptors/loading.interceptor';
 import { retryInterceptor } from './core/interceptors/retry.interceptor';
+
+const AmbeekaAura = definePreset(Aura, {
+  semantic: {
+    primary: {
+      50: '#e5f5f2',
+      100: '#cce8e4',
+      200: '#a2d4ce',
+      300: '#78bfb7',
+      400: '#378c84',
+      500: '#00685f',
+      600: '#005c54',
+      700: '#00524c',
+      800: '#003f3a',
+      900: '#002d29',
+      950: '#001d1a',
+    },
+    colorScheme: {
+      light: {
+        primary: {
+          color: '{primary.500}',
+          contrastColor: '#ffffff',
+          hoverColor: '{primary.700}',
+          activeColor: '{primary.800}',
+        },
+        formField: { hoverBorderColor: '{primary.color}' },
+      },
+      dark: {
+        primary: {
+          color: '#70d2c6',
+          contrastColor: '#102126',
+          hoverColor: '#91e0d7',
+          activeColor: '#aae9e1',
+        },
+        formField: { hoverBorderColor: '{primary.color}' },
+      },
+    },
+    focusRing: {
+      width: '2px',
+      style: 'solid',
+      color: '{primary.color}',
+      offset: '2px',
+    },
+  },
+});
 
 /**
  * Application-wide configuration.
@@ -51,8 +96,7 @@ export const appConfig: ApplicationConfig = {
     provideAnimationsAsync(),
     providePrimeNG({
       theme: {
-        preset: Aura,
-        options: { darkModeSelector: '.dark-mode' }
+        preset: AmbeekaAura,
       }
     }),
 

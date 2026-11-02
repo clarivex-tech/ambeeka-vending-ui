@@ -18,7 +18,8 @@
 
 export const environment = {
   production: false,
-  apiUrl: 'http://localhost:5081',
+  // Local API calls use the Angular dev-server proxy to avoid browser CORS.
+  apiUrl: '',
   cognito: {
     region: 'us-east-1',
     userPoolId: 'us-east-1_FJU1dsYdU',

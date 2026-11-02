@@ -10,8 +10,8 @@
 .billing-state--error { border: 1px solid var(--color-error, #b91c1c); border-radius: 4px; color: var(--color-error, #b91c1c); }
 .preview-result__header { align-items: flex-start; }
 .preview-result__header code { overflow-wrap: anywhere; }
-.review-status, .preview-readiness { padding: 0.4rem 0.6rem; border-radius: 4px; background: #fff7ed; color: #9a3412; font-weight: 600; }
-.review-status--ready, .preview-readiness--ready { background: #f0fdf4; color: #166534; }
+.review-status { padding: 0.4rem 0.6rem; border-radius: 4px; background: #fff7ed; color: #9a3412; font-weight: 600; }
+.review-status--ready { background: #f0fdf4; color: #166534; }
 .billing-summary { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 1rem; }
 .billing-summary article { display: grid; gap: 0.25rem; padding: 1rem; border: 1px solid var(--color-border, #ddd); border-radius: 8px; }
 .billing-summary span, .week-card__due span { color: var(--color-text-muted, #666); }
@@ -39,7 +39,32 @@ th { color: var(--color-text-muted, #666); font-weight: 600; }
   .saved-preview__form { grid-template-columns: 1fr; }
   .saved-preview__form label { grid-column: auto; }
   .billing-summary { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-  .preview-readiness { display: grid; }
   .week-card__due { text-align: left; }
 }
 @media (max-width: 500px) { .billing-summary { grid-template-columns: 1fr; } }
+
+.billing-page { gap: clamp(1rem, 2vw, 1.5rem); }
+.billing-page__header h2 { font-size: clamp(1.5rem, 2.5vw, 2rem); letter-spacing: -0.03em; }
+.billing-card,
+.preview-result {
+  border-color: var(--color-border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
+}
+.saved-preview { align-items: start; }
+.billing-summary article,
+.week-card {
+  border-color: var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-surface);
+}
+.billing-summary article { box-shadow: var(--shadow-sm); }
+.week-details summary { color: var(--color-primary); }
+.review-status { border-radius: var(--radius-full); }
+.review-status--ready { background: var(--color-success-bg); color: var(--color-success); }
+.pending-value { color: var(--color-warning); }
+
+@media (min-width: 1000px) {
+  .billing-summary { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+  .week-card { padding: 1.25rem; }
+}
