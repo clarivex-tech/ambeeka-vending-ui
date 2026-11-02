@@ -1,0 +1,115 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Weekly Settlement Dashboard | Ambeeka</title>
+  <link rel="stylesheet" href="weekly-billing-mockups.css">
+</head>
+<body class="page-dashboard">
+  <aside class="dash-sidebar">
+    <a class="dash-brand" href="weekly-upload.html" aria-label="Ambeeka home">
+      <span class="dash-brand__mark">A</span>
+      <span>Ambeeka<small>WEEKLY BILLING</small></span>
+    </a>
+    <nav class="dash-nav" aria-label="Main navigation">
+      <a href="weekly-upload.html"><span class="dash-nav__icon">⌂</span>Home</a>
+      <a class="is-active" aria-current="page" href="dashboard.html"><span class="dash-nav__icon">▦</span>Dashboard</a>
+      <a href="weekly-upload.html"><span class="dash-nav__icon">▤</span>Weekly Billing</a>
+      <a href="pricing-catalog.html"><span class="dash-nav__icon">◇</span>Pricing</a>
+    </nav>
+    <div class="dash-sidebar__bottom">
+      <div class="dash-user"><span class="dash-avatar">A</span><span>Admin<small>Billing workspace</small></span></div>
+      <a href="weekly-upload.html"><span class="dash-nav__icon">↪</span>Sign out</a>
+    </div>
+  </aside>
+
+  <main class="dash-main">
+    <header class="dash-header">
+      <div>
+        <p class="eyebrow">Overview</p>
+        <h1>Weekly Settlement Dashboard</h1>
+        <p class="muted">A quick look at POS imports, weekly calculations, and items that need attention.</p>
+      </div>
+      <div class="dash-header__actions">
+        <label class="dash-period">◷ <select aria-label="Dashboard date range"><option>Last 12 weeks</option><option>Last 30 days</option><option>All time</option></select></label>
+        <a class="button" href="weekly-upload.html">＋ New import</a>
+      </div>
+    </header>
+
+    <section class="dash-metrics" aria-label="Import and calculation metrics">
+      <article class="dash-metric dash-metric--imports">
+        <span class="dash-metric__icon" aria-hidden="true">▤</span>
+        <div><span class="dash-metric__label">POS imports</span><strong>24</strong><small>Received in the last 12 weeks</small></div>
+        <span class="dash-metric__note">↑ 4 this month</span>
+      </article>
+      <article class="dash-metric dash-metric--vends">
+        <span class="dash-metric__icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="20" r="1"></circle><circle cx="19" cy="20" r="1"></circle><path d="M2 3h2l2.4 11.4a2 2 0 0 0 2 1.6h9.8a2 2 0 0 0 2-1.6L22 7H5"></path></svg></span>
+        <div><span class="dash-metric__label">Counted vends</span><strong>4,832</strong><small>From saved weekly calculations</small></div>
+        <span class="dash-metric__note">Across 21 weeks</span>
+      </article>
+      <article class="dash-metric dash-metric--excluded">
+        <span class="dash-metric__icon" aria-hidden="true">⊘</span>
+        <div><span class="dash-metric__label">Excluded transactions</span><strong>37</strong><small>Excluded by the current rule</small></div>
+        <span class="dash-metric__note">View weekly details</span>
+      </article>
+      <article class="dash-metric dash-metric--review">
+        <span class="dash-metric__icon" aria-hidden="true">!</span>
+        <div><span class="dash-metric__label">Needs review</span><strong>3</strong><small>Imports waiting for decisions</small></div>
+        <span class="dash-metric__note">Review imports →</span>
+      </article>
+    </section>
+
+    <div class="dash-insights">
+      <section class="dash-panel">
+        <header class="dash-panel__header"><span class="dash-panel__symbol">▥</span><div><h2>Counted vends by POS week</h2><p>Weekly activity from the latest saved calculation for each import</p></div><span class="dash-live"><i></i> Weekly</span></header>
+        <div class="dash-chart" role="img" aria-label="Bar chart of counted vends across eight POS weeks">
+          <div class="dash-chart__axis"><span>800</span><span>600</span><span>400</span><span>200</span><span>0</span></div>
+          <div class="dash-chart__plot">
+            <div class="dash-chart__grid"><i></i><i></i><i></i><i></i><i></i></div>
+            <div class="dash-bars">
+              <div class="dash-bar-item"><span>421</span><i style="--bar-height: 42%"></i><small>Sep 07</small></div>
+              <div class="dash-bar-item"><span>510</span><i style="--bar-height: 51%"></i><small>Sep 14</small></div>
+              <div class="dash-bar-item"><span>486</span><i style="--bar-height: 49%"></i><small>Sep 21</small></div>
+              <div class="dash-bar-item"><span>602</span><i style="--bar-height: 60%"></i><small>Sep 28</small></div>
+              <div class="dash-bar-item"><span>578</span><i style="--bar-height: 58%"></i><small>Oct 05</small></div>
+              <div class="dash-bar-item"><span>690</span><i style="--bar-height: 69%"></i><small>Oct 12</small></div>
+              <div class="dash-bar-item"><span>734</span><i style="--bar-height: 73%"></i><small>Oct 19</small></div>
+              <div class="dash-bar-item dash-bar-item--latest"><span>811</span><i style="--bar-height: 81%"></i><small>Oct 26</small></div>
+            </div>
+          </div>
+        </div>
+        <div class="dash-chart__footer"><span><i class="legend-dot"></i>Counted vends</span><span>Example data · latest calculation per import</span></div>
+      </section>
+
+      <section class="dash-panel dash-attention">
+        <header class="dash-panel__header"><span class="dash-panel__symbol">✓</span><div><h2>Import health</h2><p>Current status across recent uploads</p></div></header>
+        <div class="dash-health__total"><strong>24</strong><span>imports received</span></div>
+        <div class="dash-health__track" aria-label="21 calculated, 3 need review"><span></span><i></i></div>
+        <ul class="dash-health__legend">
+          <li><span><i class="health-dot health-dot--complete"></i>Calculation saved</span><strong>21</strong></li>
+          <li><span><i class="health-dot health-dot--review"></i>Needs review</span><strong>3</strong></li>
+          <li><span><i class="health-dot health-dot--excluded"></i>Excluded transactions</span><strong>37</strong></li>
+        </ul>
+        <a class="dash-text-link" href="weekly-upload.html">Open weekly billing <span>→</span></a>
+      </section>
+    </div>
+
+    <section class="dash-panel dash-recent">
+      <header class="dash-panel__header dash-panel__header--table"><span class="dash-panel__symbol">▤</span><div><h2>Recent POS imports</h2><p>Open an import to view its processing details and saved calculation.</p></div><a class="dash-text-link" href="weekly-upload.html">View all imports <span>→</span></a></header>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Import / file</th><th>Employer</th><th>POS week</th><th>Imported</th><th>Counted</th><th>Excluded</th><th>Status</th><th>Action</th></tr></thead>
+          <tbody>
+            <tr><td><strong>Warren Valve POS.xlsx</strong><small class="dash-cell-sub">IMP-2048 · Nov 2, 2026</small></td><td>Warren Valve</td><td>Oct 26 – Nov 1</td><td>226</td><td>219</td><td>7</td><td><span class="dash-status dash-status--saved"><i></i>Calculation saved</span></td><td><a class="dash-view" href="calculation-result.html">View processing</a></td></tr>
+            <tr><td><strong>Warren Valve POS.xlsx</strong><small class="dash-cell-sub">IMP-2047 · Oct 26, 2026</small></td><td>Warren Valve</td><td>Oct 19 – Oct 25</td><td>184</td><td>181</td><td>3</td><td><span class="dash-status dash-status--review"><i></i>Needs review</span></td><td><a class="dash-view" href="pricing-review.html">Continue review</a></td></tr>
+            <tr><td><strong>North Clinic POS.xlsx</strong><small class="dash-cell-sub">IMP-2046 · Oct 20, 2026</small></td><td>North Clinic</td><td>Oct 12 – Oct 18</td><td>312</td><td>306</td><td>6</td><td><span class="dash-status dash-status--saved"><i></i>Calculation saved</span></td><td><a class="dash-view" href="calculation-result.html">View processing</a></td></tr>
+            <tr><td><strong>Riverside POS.xlsx</strong><small class="dash-cell-sub">IMP-2045 · Oct 13, 2026</small></td><td>Riverside</td><td>Oct 05 – Oct 11</td><td>271</td><td>269</td><td>2</td><td><span class="dash-status dash-status--duplicate"><i></i>Duplicate upload</span></td><td><a class="dash-view" href="weekly-upload.html">View import</a></td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p class="dash-sample-note">Illustrative dashboard preview. Figures are sample data; final totals and trends depend on the backend summary contract.</p>
+    </section>
+  </main>
+</body>
+</html>

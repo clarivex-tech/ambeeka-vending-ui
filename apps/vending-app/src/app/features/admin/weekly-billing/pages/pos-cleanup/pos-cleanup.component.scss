@@ -21,3 +21,16 @@
   .cleanup-counts { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .cleanup-alert { align-items: flex-start; flex-direction: column; }
 }
+
+.billing-page { gap: clamp(1rem, 2vw, 1.5rem); }
+.billing-page__header h2 { font-size: clamp(1.5rem, 2.5vw, 2rem); letter-spacing: -0.03em; }
+.billing-card,
+.cleanup-confirmation,
+.cleanup-result {
+  border-color: var(--color-border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
+}
+.cleanup-counts div { border-radius: var(--radius-md); background: var(--color-surface); }
+.cleanup-confirmation { background: var(--color-error-bg); }
+.cleanup-result { background: var(--color-success-bg); }

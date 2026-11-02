@@ -10,3 +10,7 @@
 .rules-meta { margin: 0; font-size: 0.85rem; }
 .rules-error { padding: var(--spacing-sm, 0.5rem); border: 1px solid var(--color-error, #b91c1c); border-radius: var(--radius-sm, 4px); color: var(--color-error, #b91c1c); }
 @media (max-width: 650px) { .rules-fields { grid-template-columns: 1fr; } }
+
+.rules-page { gap: clamp(1rem, 2vw, 1.5rem); }
+.rules-page header h2 { font-size: clamp(1.5rem, 2.5vw, 2rem); letter-spacing: -0.03em; }
+.rules-card { border-color: var(--color-border); border-radius: var(--radius-lg); box-shadow: var(--shadow-sm); }

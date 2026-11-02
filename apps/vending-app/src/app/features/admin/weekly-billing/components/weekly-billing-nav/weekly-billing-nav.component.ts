@@ -7,7 +7,7 @@ import { RouterLink, RouterLinkActive } from '@angular/router';
   imports: [RouterLink, RouterLinkActive],
   template: `
     <nav class="billing-nav" aria-label="Weekly Billing pages">
-      <a routerLink="/admin/weekly-billing" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }" ariaCurrentWhenActive="page">Monthly Summary</a>
+      <a routerLink="/admin/weekly-billing" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }" ariaCurrentWhenActive="page">Weekly Summary</a>
       <a routerLink="/admin/weekly-billing/import" routerLinkActive="active" ariaCurrentWhenActive="page">Import &amp; Processing</a>
       <a routerLink="/admin/weekly-billing/imports" routerLinkActive="active" ariaCurrentWhenActive="page">Import History</a>
       <a routerLink="/admin/weekly-billing/pos-cleanup" routerLinkActive="active" ariaCurrentWhenActive="page">POS Cleanup</a>
@@ -15,9 +15,10 @@ import { RouterLink, RouterLinkActive } from '@angular/router';
     </nav>
   `,
   styles: [`
-    .billing-nav { display: flex; flex-wrap: wrap; gap: var(--spacing-md, 1rem); border-bottom: 1px solid var(--color-border, #ddd); }
-    .billing-nav a { padding: var(--spacing-sm, 0.5rem) var(--spacing-xs, 0.25rem); border-bottom: 2px solid transparent; color: var(--color-text-muted, #666); text-decoration: none; }
-    .billing-nav a.active { border-bottom-color: var(--color-primary, #2563eb); color: var(--color-primary, #2563eb); font-weight: 600; }
+    .billing-nav { display: flex; flex-wrap: nowrap; gap: 0.25rem; overflow-x: auto; border-bottom: 1px solid var(--color-border, #dce5e8); scrollbar-width: thin; }
+    .billing-nav a { flex: 0 0 auto; padding: 0.7rem 0.9rem; border-bottom: 3px solid transparent; color: var(--color-text-muted, #60727b); text-decoration: none; font-weight: 600; white-space: nowrap; transition: background-color 160ms ease, color 160ms ease, border-color 160ms ease; }
+    .billing-nav a:hover { color: var(--color-primary, #00685f); background: var(--color-primary-light, #e5f5f2); }
+    .billing-nav a.active { border-bottom-color: var(--color-primary, #00685f); color: var(--color-primary, #00685f); }
   `],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })

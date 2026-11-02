@@ -3,6 +3,7 @@ import { Observable } from 'rxjs';
 import { ApiService } from '../../../../core/services/api.service';
 import {
   BILLING_CALCULATIONS_API_PATH,
+  BILLING_DASHBOARD_API_PATH,
   BILLING_IMPORTS_API_PATH,
   BILLING_POS_CLEANUP_API_PATH,
   BILLING_PRICING_REVIEW_API_PATH,
@@ -10,8 +11,10 @@ import {
 } from '../constants/weekly-billing.constants';
 import {
   BillingCalculationResponse,
+  BillingDashboardResponse,
   BillingCalculationHistoryPage,
   EmployerRuleSet,
+  ImportProcessingDetails,
   ManualCorrection,
   PosBillingCleanupPreview,
   PosBillingCleanupResult,
@@ -26,11 +29,25 @@ import {
 export class WeeklyBillingService {
   private readonly api = inject(ApiService);
 
-  createCalculationPreview(month: string, employer: string, resolutions: PricingResolution[], calculationName?: string): Observable<BillingCalculationResponse> {
-    const query = `month=${encodeURIComponent(month)}&employer=${encodeURIComponent(employer)}`;
-    const body: { resolutions: PricingResolution[]; calculationName?: string } = { resolutions };
-    if (calculationName?.trim()) body.calculationName = calculationName.trim();
-    return this.api.post<BillingCalculationResponse>(`${BILLING_CALCULATIONS_API_PATH}?${query}`, body);
+  getDashboard(): Observable<BillingDashboardResponse> {
+    return this.api.get<BillingDashboardResponse>(BILLING_DASHBOARD_API_PATH);
+  }
+
+  getImportProcessing(importId: string): Observable<ImportProcessingDetails> {
+    return this.api.get<ImportProcessingDetails>(
+      `${BILLING_IMPORTS_API_PATH}/${encodeURIComponent(importId)}/processing`,
+    );
+  }
+
+  createImportCalculation(importId: string, resolutions: PricingResolution[], calculationName?: string): Observable<BillingCalculationResponse> {
+    const body: { calculationName: string | null; resolutions: PricingResolution[] } = {
+      calculationName: calculationName?.trim() || null,
+      resolutions,
+    };
+    return this.api.post<BillingCalculationResponse>(
+      `${BILLING_IMPORTS_API_PATH}/${encodeURIComponent(importId)}/calculations`,
+      body,
+    );
   }
 
   getCalculationHistory(page: number, pageSize: number): Observable<BillingCalculationHistoryPage> {

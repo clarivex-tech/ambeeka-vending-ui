@@ -33,8 +33,16 @@ export interface WorkbookImportResult {
   detectedStartDate?: string | null;
   detectedEndDate?: string | null;
   blankProductRows?: number;
+  ignoredRows?: ImportIgnoredRow[] | null;
   unmatchedProducts?: UnmatchedProduct[];
   pricingReview?: PricingReviewResponse;
+}
+
+export interface ImportIgnoredRow {
+  rowNumber: number;
+  transactionId: string | null;
+  reason: string;
+  reasonCode: 'ProductInfoAndSettlementTimeBlank' | null;
 }
 
 export type PricingReviewReason = 'MissingProductName' | 'AliasNotFound' | 'AmbiguousAlias' | 'InvalidPrice';
@@ -72,8 +80,8 @@ export interface PricingReviewResponse {
 }
 
 export type PricingResolution =
-  | { importId: string; sourceRowNumber: number; action: 'Map'; productId: string }
-  | { importId: string; sourceRowNumber: number; action: 'Ignore' };
+  | { sourceRowNumber: number; action: 'Map'; productId: string }
+  | { sourceRowNumber: number; action: 'Ignore' };
 
 export interface AppliedPricingResolution {
   importId: string;
@@ -109,6 +117,51 @@ export interface WorkbookImportHistoryPage {
   page: number;
   pageSize: number;
   totalCount: number;
+}
+
+export interface BillingDashboardSummary {
+  importCount: number;
+  importsNeedingReview: number;
+  completedCalculations: number;
+  countedVends: number;
+  excludedTransactionCount: number;
+}
+
+export interface BillingDashboardWeek {
+  weekStart: string;
+  weekEnd: string;
+  countedVends: number;
+  excludedCount: number;
+}
+
+export interface BillingDashboardImport {
+  importId: string;
+  fileName: string;
+  employer: string | null;
+  uploadDate: string;
+  posWeekStart: string | null;
+  posWeekEnd: string | null;
+  importedCount: number;
+  importStatus: string;
+  calculationStatus: string;
+  latestCalculationId: string | null;
+  countedVends: number | null;
+  excludedCount: number | null;
+}
+
+export interface BillingDashboardResponse {
+  summary: BillingDashboardSummary;
+  weeklyChart: BillingDashboardWeek[];
+  recentImports: BillingDashboardImport[];
+}
+
+export interface ImportProcessingDetails {
+  import: WorkbookImportResult;
+  importedRows: unknown[] | null;
+  ignoredRows: ImportIgnoredRow[] | null;
+  pricingReview: PricingReviewResponse | null;
+  latestCalculation: BillingCalculationResponse | null;
+  calculations: BillingCalculationResponse[] | null;
 }
 
 export interface BillingCalculationHistoryItem {
@@ -179,12 +232,26 @@ export interface UnmatchedBillingRow {
   reason: 'AliasNotFound' | 'NoEffectivePrice' | 'AmbiguousEffectivePrice';
 }
 
+export interface ExcludedBillingRow {
+  transactionId: string;
+  machineSettlementTime: string;
+  sourceProductName: string;
+  price: number;
+  freeItem: number;
+  netPrice: number;
+  settlement: number;
+  reason: 'NonpositiveNetPrice';
+  sourceImportId: string | null;
+  sourceRowNumber: number | null;
+}
+
 export interface WeeklyCalculationResult {
   startDate: string;
   endDate: string;
   rows: CalculatedBillingRow[];
   unmatchedRows: UnmatchedBillingRow[];
   rowsExcludedForNonpositiveNetPrice: number;
+  excludedRows?: ExcludedBillingRow[] | null;
   totals: BillingTotals;
 }
 
@@ -206,6 +273,7 @@ export type BillingCalculationStatus = 'NeedsReview' | 'ReadyForReview';
 
 export interface BillingCalculationResponse {
   id: string;
+  importId?: string;
   calculationName: string;
   employerName: string;
   status: BillingCalculationStatus;

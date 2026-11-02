@@ -75,7 +75,8 @@
         "serve": {
           "builder": "@angular-devkit/build-angular:dev-server",
           "options": {
-            "buildTarget": "vending-app:build:development"
+            "buildTarget": "vending-app:build:development",
+            "proxyConfig": "apps/vending-app/proxy.conf.json"
           },
           "configurations": {
             "production": {

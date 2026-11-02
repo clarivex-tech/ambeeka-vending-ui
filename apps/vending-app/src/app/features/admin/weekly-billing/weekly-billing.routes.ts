@@ -23,6 +23,13 @@ export const WEEKLY_BILLING_ROUTES: Routes = [
       ),
   },
   {
+    path: 'import/:importId/processing',
+    loadComponent: () =>
+      import('./pages/import-processing/import-processing.component').then(
+        (m) => m.ImportProcessingComponent,
+      ),
+  },
+  {
     path: 'pos-cleanup',
     loadComponent: () =>
       import('./pages/pos-cleanup/pos-cleanup.component').then(
