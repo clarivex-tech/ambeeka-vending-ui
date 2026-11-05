@@ -94,14 +94,13 @@
         @if (result.ignoredRows; as ignoredRows) {
           @if (ignoredRows.length > 0) {
             <div class="table-scroll">
-              <table>
-                <thead><tr><th>Excel row</th><th>Transaction ID</th><th>Reason</th></tr></thead>
+              <table class="ignored-summary-table">
+                <thead><tr><th scope="col">Reason</th><th scope="col">Rows ignored</th></tr></thead>
                 <tbody>
-                  @for (row of ignoredRows; track row.rowNumber) {
+                  @for (group of ignoredRowSummary(); track group.reason) {
                     <tr>
-                      <td>{{ row.rowNumber }}</td>
-                      <td [textContent]="row.transactionId || '—'"></td>
-                      <td [textContent]="importIgnoredRowReason(row)"></td>
+                      <td><span class="ignored-summary-reason"><i class="pi pi-info-circle" aria-hidden="true"></i><span [textContent]="group.reason"></span></span></td>
+                      <td><span class="decision-status decision-status--pending">{{ group.count | number }}</span></td>
                     </tr>
                   }
                 </tbody>
@@ -139,12 +138,10 @@
       </div>
       <div class="table-scroll">
         <table>
-          <thead><tr><th>Source row</th><th>Transaction ID</th><th>POS product</th><th>Saved decision</th></tr></thead>
+          <thead><tr><th>POS product</th><th>Saved decision</th></tr></thead>
           <tbody>
             @for (decision of savedAppliedResolutions(); track decision.importId + ':' + decision.sourceRowNumber) {
               <tr>
-                <td>{{ decision.sourceRowNumber }}</td>
-                <td [textContent]="decision.transactionId || '—'"></td>
                 <td [textContent]="decision.originalProductSelectionInfo || '—'"></td>
                 <td>{{ decision.action === 'Ignore' ? 'Ignored' : 'Mapped to ' + (decision.productName || 'catalog product') }}</td>
               </tr>
@@ -160,7 +157,7 @@
       <div class="section-heading">
         <div>
           <h3 id="review-heading">Step 2 · Review POS product rows</h3>
-          <p class="muted">Resolve every flagged row by mapping it to a catalog product or explicitly ignoring it.</p>
+          <p class="muted">{{ readOnlyView() ? 'Review the saved decisions for each flagged transaction.' : 'Choose once per POS product. Mapping or ignoring a product applies to every flagged transaction in its group.' }}</p>
         </div>
         @if (!readOnlyView()) {
           <p-button label="Refresh review" icon="pi pi-refresh" severity="secondary" [outlined]="true" [loading]="reviewLoading()" [disabled]="reviewLoading() || calculating()" (onClick)="loadPricingReview()" />
@@ -186,6 +183,7 @@
         <div class="review-summary">
           <span><strong>{{ pricingReview.transactionsReviewed | number }}</strong> transactions reviewed</span>
           <span><strong>{{ pricingReview.rowsNeedingReview | number }}</strong> rows flagged</span>
+          @if (!readOnlyView()) { <span><strong>{{ issueGroups().length | number }}</strong> product groups</span> }
           <span><strong>{{ readOnlyView() ? (savedResolutionCount() | number) : (resolvedCount() | number) }}</strong> {{ readOnlyView() ? 'saved decisions' : 'decisions entered' }}</span>
         </div>
 
@@ -193,38 +191,37 @@
           <div class="review-clear" role="status">No POS pricing rows need a decision in this workbook.</div>
         } @else {
           <div class="issue-list">
-            @for (issue of pricingReview.issues; track issueKey(issue)) {
-                            <details class="issue-card" [open]="readOnlyView()">
+            @for (group of issueGroups(); track group.key) {
+              @let issue = group.issues[0];
+              <details class="issue-card" [open]="readOnlyView()">
                 <summary class="issue-card__summary">
                   <div class="issue-card__summary-main">
                     <span class="issue-card__summary-meta">
-                      <span class="issue-card__row">Excel row {{ issue.sourceRowNumber }}</span>
-                      <span class="issue-card__reason">{{ reasonLabel(issue.reason) }}</span>
+                      <span class="issue-card__row">{{ group.issues.length | number }} {{ group.issues.length === 1 ? 'transaction' : 'transactions' }}</span>
+                      <span class="issue-card__reason">{{ groupReasons(group) }}</span>
                     </span>
-                    <strong class="issue-card__product" [textContent]="issue.productSelectionInfo || 'No product name provided'"></strong>
-                    <span class="muted">{{ issue.transactionId || 'No transaction ID' }} · {{ issue.machineName || 'Machine unavailable' }} · {{ issue.machineSettlementTime | date: 'medium' }}</span>
+                    <strong class="issue-card__product" [textContent]="issue.productAlias?.trim() || 'POS alias unavailable'"></strong>
+                    @if (!readOnlyView()) { <span class="muted">One decision applies to all {{ group.issues.length | number }} flagged {{ group.issues.length === 1 ? 'transaction' : 'transactions' }}.</span> }
                   </div>
-                  @if (resolution(issue); as decision) {
+                  @if (groupResolution(group); as decision) {
                     <span class="decision-status" [class.decision-status--ignored]="decision.action === 'Ignore'">
                       {{ decision.action === 'Ignore' ? 'Ignored' : 'Mapped' }}
                     </span>
                   } @else {
-                    <span class="decision-status decision-status--pending">Decision required</span>
+                    <span class="decision-status decision-status--pending">{{ groupHasDecision(group) ? 'Review group decision' : 'Decision required' }}</span>
                   }
                   <i class="pi pi-chevron-down issue-card__chevron" aria-hidden="true"></i>
                 </summary>
 
                 <div class="issue-card__content">
                   <dl class="issue-details">
-                    <div><dt>POS product text</dt><dd [textContent]="issue.productSelectionInfo || 'No product name provided'"></dd></div>
-                    <div><dt>POS alias</dt><dd [textContent]="issue.productAlias || '—'"></dd></div>
-                    <div><dt>Settlement</dt><dd>{{ issue.settlementValue | currency: 'USD' }}</dd></div>
-                    <div><dt>Transaction ID</dt><dd class="import-id" [textContent]="issue.transactionId || '—'"></dd></div>
+                    <div><dt>Flagged transactions</dt><dd>{{ group.issues.length | number }}</dd></div>
+                    <div><dt>Total settlement</dt><dd>{{ groupSettlement(group) | currency: 'USD' }}</dd></div>
                   </dl>
 
-                  @if (issue.suggestedProducts.length > 0) {
+                  @if (groupSuggestions(group).length > 0) {
                     <p class="suggestions"><strong>Suggested matches:</strong>
-                      @for (product of issue.suggestedProducts; track product.productId) {
+                      @for (product of groupSuggestions(group); track product.productId) {
                         <span>{{ product.productName }} · {{ product.posAlias }} · {{ product.price | currency: 'USD' }}</span>
                       }
                     </p>
@@ -233,15 +230,15 @@
                   @if (!readOnlyView()) {
                   <div class="decision-controls">
                     <label [for]="'product-' + issueKey(issue)">Map to catalog product</label>
-                    <select [id]="'product-' + issueKey(issue)" [value]="mappedProductId(issue)" (change)="mapIssue(issue, $event)">
+                    <select [id]="'product-' + issueKey(issue)" [value]="mappedProductId(group)" (change)="mapGroup(group, $event)">
                       <option value="">Choose a product…</option>
                       @for (product of allProducts(); track product.productId) {
                         <option [value]="product.productId">{{ product.productName }} · {{ product.posAlias }} · {{ product.price | currency: 'USD' }}</option>
                       }
                     </select>
-                    <p-button label="Ignore row" icon="pi pi-ban" severity="secondary" [outlined]="true" [disabled]="resolution(issue)?.action === 'Ignore'" (onClick)="ignoreIssue(issue)" />
-                    @if (resolution(issue)) {
-                      <p-button label="Clear decision" severity="secondary" [text]="true" (onClick)="clearResolution(issue)" />
+                    <p-button label="Ignore product group" icon="pi pi-ban" severity="secondary" [outlined]="true" [disabled]="groupResolution(group)?.action === 'Ignore'" (onClick)="ignoreGroup(group)" />
+                    @if (groupHasDecision(group)) {
+                      <p-button label="Clear group decision" severity="secondary" [text]="true" (onClick)="clearGroup(group)" />
                     }
                   </div>
                   } @else {
@@ -329,10 +326,10 @@
           <summary>Ignored transactions ({{ result.result.ignoredTransactions?.length ?? 0 }})</summary>
           <div class="table-scroll">
             <table>
-              <thead><tr><th>Excel row</th><th>Transaction ID</th><th>POS product</th><th>Settlement</th></tr></thead>
+              <thead><tr><th>POS product</th><th>Settlement</th></tr></thead>
               <tbody>
                 @for (row of result.result.ignoredTransactions; track row.importId + ':' + row.sourceRowNumber) {
-                  <tr><td>{{ row.sourceRowNumber }}</td><td [textContent]="row.transactionId"></td><td [textContent]="row.productSelectionInfo || 'No product name provided'"></td><td>{{ row.settlementValue | currency: 'USD' }}</td></tr>
+                  <tr><td [textContent]="row.productSelectionInfo || 'No product name provided'"></td><td>{{ row.settlementValue | currency: 'USD' }}</td></tr>
                 }
               </tbody>
             </table>
@@ -355,12 +352,10 @@
                   @if (excludedRows.length > 0) {
                     <div class="table-scroll">
                       <table>
-                        <thead><tr><th>Source row</th><th>Transaction ID</th><th>Settlement time</th><th>Product</th><th>Reason</th><th>Price</th><th>Free item</th><th>Net price</th><th>Settlement</th></tr></thead>
+                        <thead><tr><th>Settlement time</th><th>Product</th><th>Reason</th><th>Price</th><th>Free item</th><th>Net price</th><th>Settlement</th></tr></thead>
                         <tbody>
                           @for (row of excludedRows; track row.sourceImportId + ':' + row.sourceRowNumber + ':' + row.transactionId) {
                             <tr>
-                              <td>{{ row.sourceRowNumber ?? '—' }}</td>
-                              <td [textContent]="row.transactionId"></td>
                               <td>{{ row.machineSettlementTime | date: 'medium' }}</td>
                               <td [textContent]="row.sourceProductName"></td>
                               <td [textContent]="excludedRowReason(row.reason)"></td>

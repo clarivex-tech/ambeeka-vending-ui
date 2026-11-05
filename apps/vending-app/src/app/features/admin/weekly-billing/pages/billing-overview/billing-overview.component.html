@@ -118,11 +118,10 @@
             @if (week.rows.length > 0) {
               <div class="table-scroll">
                 <table>
-                  <thead><tr><th>Transaction ID</th><th>Settlement time</th><th>Source product</th><th>Matched product</th><th>Price</th><th>Free item</th><th>Net price</th><th>Settlement</th><th>Review</th></tr></thead>
+                  <thead><tr><th>Settlement time</th><th>Source product</th><th>Matched product</th><th>Price</th><th>Free item</th><th>Net price</th><th>Settlement</th><th>Review</th></tr></thead>
                   <tbody>
                     @for (row of week.rows; track row.transactionId) {
                       <tr [class.row-review]="row.highlightForReview">
-                        <td [textContent]="row.transactionId"></td>
                         <td>{{ row.machineSettlementTime | date: 'medium' }}</td>
                         <td [textContent]="row.sourceProductName"></td>
                         <td [textContent]="row.productName"></td>
@@ -145,11 +144,10 @@
               @if (week.unmatchedRows.length > 0) {
                 <div class="table-scroll">
                   <table>
-                    <thead><tr><th>Transaction ID</th><th>Settlement time</th><th>Source product</th><th>Settlement</th><th>Reason</th></tr></thead>
+                    <thead><tr><th>Settlement time</th><th>Source product</th><th>Settlement</th><th>Reason</th></tr></thead>
                     <tbody>
                       @for (row of week.unmatchedRows; track row.transactionId) {
                         <tr class="unmatched-row">
-                          <td [textContent]="row.transactionId"></td>
                           <td>{{ row.machineSettlementTime | date: 'medium' }}</td>
                           <td [textContent]="row.sourceProductName"></td>
                           <td>{{ row.settlement | currency: 'USD' }}</td>

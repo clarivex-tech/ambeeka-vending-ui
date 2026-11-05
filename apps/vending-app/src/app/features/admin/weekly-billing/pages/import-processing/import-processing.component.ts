@@ -1,6 +1,6 @@
 import { CurrencyPipe, DatePipe, DecimalPipe } from '@angular/common';
 import { HttpErrorResponse } from '@angular/common/http';
-import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ButtonModule } from 'primeng/button';
@@ -27,6 +27,11 @@ interface ExistingImportInfo {
   createdAt?: string;
 }
 
+interface PricingIssueGroup {
+  key: string;
+  issues: PricingReviewIssue[];
+}
+
 @Component({
   selector: 'vpa-import-processing',
   standalone: true,
@@ -42,6 +47,14 @@ export class ImportProcessingComponent {
   readonly file = signal<File | null>(null);
   readonly displayName = signal('');
   readonly validation = signal<WorkbookImportResult | null>(null);
+  readonly ignoredRowSummary = computed(() => {
+    const counts = new Map<string, number>();
+    for (const row of this.validation()?.ignoredRows ?? []) {
+      const reason = this.importIgnoredRowReason(row);
+      counts.set(reason, (counts.get(reason) ?? 0) + 1);
+    }
+    return Array.from(counts, ([reason, count]) => ({ reason, count }));
+  });
   readonly validationIssues = signal<string[]>([]);
   readonly existingImport = signal<ExistingImportInfo | null>(null);
   readonly review = signal<PricingReviewResponse | null>(null);
@@ -58,6 +71,20 @@ export class ImportProcessingComponent {
   readonly calculationError = signal<string | null>(null);
   readonly fileError = signal<string | null>(null);
   readonly readOnlyView = signal(false);
+  readonly issueGroups = computed(() => {
+    const groups = new Map<string, PricingIssueGroup>();
+    for (const issue of this.review()?.issues ?? []) {
+      const name = issue.productSelectionInfo?.trim().replace(/\s+/g, ' ').toLowerCase();
+      // Unnamed products cannot safely share a mapping; saved decisions remain per row.
+      const key = this.readOnlyView() || !name
+        ? this.issueKey(issue)
+        : JSON.stringify([issue.importId, name]);
+      const group = groups.get(key) ?? { key, issues: [] };
+      group.issues.push(issue);
+      groups.set(key, group);
+    }
+    return [...groups.values()];
+  });
   readonly savedProcessingLoading = signal(false);
   readonly savedProcessingError = signal<string | null>(null);
   readonly savedImportedRowCount = signal<number | null>(null);
@@ -244,38 +271,72 @@ export class ImportProcessingComponent {
     });
   }
 
-  mapIssue(issue: PricingReviewIssue, event: Event): void {
+  mapGroup(group: PricingIssueGroup, event: Event): void {
     const productId = (event.target as HTMLSelectElement).value;
-    const key = this.issueKey(issue);
     const product = this.allProducts().find((option) => option.productId === productId);
     if (!product) {
-      this.removeResolution(key);
+      this.clearGroup(group);
       return;
     }
-    this.resolutions.update((current) => ({
-      ...current,
-      [key]: { sourceRowNumber: issue.sourceRowNumber, action: 'Map', productId },
-    }));
+    this.resolutions.update((current) => {
+      const next = { ...current };
+      for (const issue of group.issues) {
+        next[this.issueKey(issue)] = { sourceRowNumber: issue.sourceRowNumber, action: 'Map', productId };
+      }
+      return next;
+    });
   }
 
-  ignoreIssue(issue: PricingReviewIssue): void {
-    const key = this.issueKey(issue);
-    this.resolutions.update((current) => ({
-      ...current,
-      [key]: { sourceRowNumber: issue.sourceRowNumber, action: 'Ignore' },
-    }));
+  ignoreGroup(group: PricingIssueGroup): void {
+    this.resolutions.update((current) => {
+      const next = { ...current };
+      for (const issue of group.issues) {
+        next[this.issueKey(issue)] = { sourceRowNumber: issue.sourceRowNumber, action: 'Ignore' };
+      }
+      return next;
+    });
   }
 
-  clearResolution(issue: PricingReviewIssue): void {
-    this.removeResolution(this.issueKey(issue));
+  clearGroup(group: PricingIssueGroup): void {
+    this.resolutions.update((current) => {
+      const next = { ...current };
+      for (const issue of group.issues) delete next[this.issueKey(issue)];
+      return next;
+    });
+  }
+
+  groupResolution(group: PricingIssueGroup): PricingResolution | undefined {
+    const first = this.resolution(group.issues[0]);
+    return first && group.issues.every((issue) => {
+      const decision = this.resolution(issue);
+      return decision?.action === first.action
+        && (decision.action === 'Ignore' || (first.action === 'Map' && decision.productId === first.productId));
+    }) ? first : undefined;
+  }
+
+  groupHasDecision(group: PricingIssueGroup): boolean {
+    return group.issues.some((issue) => this.resolution(issue) !== undefined);
+  }
+
+  groupSettlement(group: PricingIssueGroup): number {
+    return group.issues.reduce((total, issue) => total + issue.settlementValue, 0);
+  }
+
+  groupReasons(group: PricingIssueGroup): string {
+    return [...new Set(group.issues.map((issue) => this.reasonLabel(issue.reason)))].join(' · ');
+  }
+
+  groupSuggestions(group: PricingIssueGroup): PricingProductOption[] {
+    return [...new Map(group.issues.flatMap((issue) => issue.suggestedProducts)
+      .map((product) => [product.productId, product])).values()];
   }
 
   resolution(issue: PricingReviewIssue): PricingResolution | undefined {
     return this.resolutions()[this.issueKey(issue)];
   }
 
-  mappedProductId(issue: PricingReviewIssue): string {
-    const resolution = this.resolution(issue);
+  mappedProductId(group: PricingIssueGroup): string {
+    const resolution = this.groupResolution(group);
     return resolution?.action === 'Map' ? resolution.productId : '';
   }
 
@@ -288,7 +349,7 @@ export class ImportProcessingComponent {
 
   importIgnoredRowReason(row: ImportIgnoredRow): string {
     if (row.reasonCode === 'ProductInfoAndSettlementTimeBlank') {
-      return row.reason || 'Product information and settlement time are blank';
+      return 'Product information and settlement time are both missing';
     }
     return row.reason || 'Reason unavailable';
   }
@@ -422,14 +483,6 @@ export class ImportProcessingComponent {
       && (typeof issue.machineName === 'string' || issue.machineName === null)
       && typeof issue.machineSettlementTime === 'string'
       && typeof issue.reason === 'string';
-  }
-
-  private removeResolution(key: string): void {
-    this.resolutions.update((current) => {
-      const next = { ...current };
-      delete next[key];
-      return next;
-    });
   }
 
   private formatWorkbookIssues(error: unknown): string[] {
