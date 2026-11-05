@@ -150,8 +150,21 @@
 .import-ignored-rows h4,
 .excluded-rows h4 { margin: 0; font-size: 1rem; }
 
+.table-scroll .ignored-summary-table {
+  th { background: #e8f4f5; color: #205d63; }
+  td { background: #f5fbfb; }
+  th:last-child,
+  td:last-child { width: 9rem; text-align: center; }
+}
+
+.ignored-summary-reason {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  i { color: #247b84; }
+}
+
 .section-heading,
-.issue-card__header,
 .review-actions,
 .result-actions {
   display: flex;
@@ -211,7 +224,6 @@
 .review-actions > p { max-width: 55rem; margin: 0; }
 
 .billing-state { padding: var(--spacing-lg); color: var(--color-text-muted); text-align: center; }
-.pending-value { color: var(--color-warning) !important; }
 .weekly-results { display: grid; grid-template-columns: minmax(0, 1fr); gap: var(--spacing-md); }
 .week-summary { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 .week-summary > header,
@@ -246,7 +258,6 @@
   .workflow-steps { grid-template-columns: 1fr; gap: var(--spacing-xs); }
   .workflow-steps li { min-height: 2.75rem; }
   .section-heading,
-  .issue-card__header,
   .review-actions,
   .result-actions,
   .week-summary > header { align-items: flex-start; flex-direction: column; }
