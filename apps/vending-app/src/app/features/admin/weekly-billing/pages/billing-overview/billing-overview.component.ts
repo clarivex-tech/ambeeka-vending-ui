@@ -1,4 +1,4 @@
-import { CurrencyPipe, DatePipe, DecimalPipe } from '@angular/common';
+import { CurrencyPipe, DatePipe, DecimalPipe, DOCUMENT } from '@angular/common';
 import { ChangeDetectionStrategy, Component, inject, OnInit, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { ButtonModule } from 'primeng/button';
@@ -16,6 +16,7 @@ import { WeeklyBillingService } from '../../services/weekly-billing.service';
 })
 export class BillingOverviewComponent implements OnInit {
   private readonly billing = inject(WeeklyBillingService);
+  private readonly document = inject(DOCUMENT);
 
   readonly pageSize = 20;
   readonly page = signal(1);
@@ -25,6 +26,32 @@ export class BillingOverviewComponent implements OnInit {
   readonly historyLoading = signal(false);
   readonly loading = signal(false);
   readonly error = signal<string | null>(null);
+  readonly downloading = signal(false);
+  readonly downloadError = signal<string | null>(null);
+
+  downloadExcel(): void {
+    const calculation = this.calculation();
+    if (!calculation || this.downloading()) return;
+    this.downloading.set(true);
+    this.downloadError.set(null);
+    this.billing.downloadCalculationWorkbook(calculation.id).subscribe({
+      next: (blob) => {
+        const url = URL.createObjectURL(blob);
+        const link = this.document.createElement('a');
+        link.href = url;
+        link.download = `weekly-billing-${calculation.id}.xlsx`;
+        this.document.body.appendChild(link);
+        link.click();
+        link.remove();
+        setTimeout(() => URL.revokeObjectURL(url), 1000);
+        this.downloading.set(false);
+      },
+      error: () => {
+        this.downloading.set(false);
+        this.downloadError.set('Could not download the Excel workbook. Please try again.');
+      },
+    });
+  }
 
   ngOnInit(): void {
     this.loadPage(1);
@@ -87,6 +114,7 @@ export class BillingOverviewComponent implements OnInit {
   }
 
   private fetchPreview(id: string): void {
+    this.downloadError.set(null);
     this.calculation.set(null);
     this.loading.set(true);
     this.billing.getCalculationPreview(id).subscribe({

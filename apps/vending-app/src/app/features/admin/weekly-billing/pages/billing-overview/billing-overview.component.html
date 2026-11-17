@@ -67,8 +67,14 @@
           <p>Calculation ID: <code [textContent]="preview.id"></code></p>
           <p>Created {{ preview.createdAt | date: 'medium' }}</p>
         </div>
-        <span class="review-status" [class.review-status--ready]="preview.status === 'ReadyForReview'" [textContent]="preview.status"></span>
+        <div class="header-actions">
+          <span class="review-status" [class.review-status--ready]="preview.status === 'ReadyForReview'" [textContent]="preview.status"></span>
+          <p-button label="Download Excel" icon="pi pi-download" [loading]="downloading()" [disabled]="downloading() || loading() || historyLoading()" (onClick)="downloadExcel()" />
+        </div>
       </header>
+      @if (downloadError(); as message) {
+        <p class="billing-state billing-state--error" role="alert" [textContent]="message"></p>
+      }
 
       <div class="billing-summary" aria-label="Server-calculated saved calculation totals">
         <article><span>Total vends</span><strong>{{ preview.result.totals.totalVends | number }}</strong></article>
@@ -167,7 +173,6 @@
         <div class="billing-state">The API returned no weekly results for this preview.</div>
       }
 
-      <p class="muted export-note">Excel export is not available from this API yet.</p>
     </section>
   }
 </section>

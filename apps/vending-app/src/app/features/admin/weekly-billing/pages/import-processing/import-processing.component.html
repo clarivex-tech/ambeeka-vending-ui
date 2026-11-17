@@ -58,7 +58,6 @@
       <h3>This workbook was already imported</h3>
       <p class="muted">Opening its existing review; no duplicate import was created.</p>
       <dl class="validation-grid">
-        <div><dt>Import ID</dt><dd class="import-id" [textContent]="existing.existingImportId"></dd></div>
         @if (existing.displayName) { <div><dt>Workbook name</dt><dd [textContent]="existing.displayName"></dd></div> }
         @if (existing.fileName) { <div><dt>File name</dt><dd [textContent]="existing.fileName"></dd></div> }
         @if (existing.status) { <div><dt>Import status</dt><dd [textContent]="existing.status"></dd></div> }
@@ -81,7 +80,6 @@
       <h3 id="validation-heading">{{ readOnlyView() ? 'Saved import details' : 'Workbook imported successfully' }}</h3>
       <p class="muted">{{ readOnlyView() ? 'This is the saved import record and its persisted processing data.' : 'The API accepted and validated this workbook.' }}</p>
       <dl class="validation-grid">
-        @if (result.id || result.importId) { <div><dt>Import ID</dt><dd class="import-id" [textContent]="result.id || result.importId"></dd></div> }
         @if (result.displayName || displayName(); as workbookName) { <div><dt>Workbook name</dt><dd class="file-name" [textContent]="workbookName"></dd></div> }
         @if (result.fileName || file()?.name; as fileName) { <div><dt>File name</dt><dd class="file-name" [textContent]="fileName"></dd></div> }
         @if (result.status) { <div><dt>Status</dt><dd [textContent]="result.status"></dd></div> }

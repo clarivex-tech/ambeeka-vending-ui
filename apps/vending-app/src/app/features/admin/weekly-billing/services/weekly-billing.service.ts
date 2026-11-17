@@ -80,6 +80,10 @@ export class WeeklyBillingService {
     return this.api.getBlob(`${WEEKLY_BILLING_API_PATH}/weeks/${encodeURIComponent(weekId)}/workbook`);
   }
 
+  downloadCalculationWorkbook(calculationId: string): Observable<Blob> {
+    return this.api.getBlob(`${BILLING_CALCULATIONS_API_PATH}/${encodeURIComponent(calculationId)}/workbook`);
+  }
+
   validateWorkbook(file: File, displayName?: string): Observable<WorkbookImportResult> {
     const body = new FormData();
     body.append('file', file);
