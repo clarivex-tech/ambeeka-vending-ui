@@ -74,9 +74,9 @@ export class ImportProcessingComponent {
   readonly issueGroups = computed(() => {
     const groups = new Map<string, PricingIssueGroup>();
     for (const issue of this.review()?.issues ?? []) {
-      const name = issue.productSelectionInfo?.trim().replace(/\s+/g, ' ').toLowerCase();
-      // Unnamed products cannot safely share a mapping; saved decisions remain per row.
-      const key = this.readOnlyView() || !name
+      const name = issue.productAlias?.trim().replace(/\s+/g, ' ').toLowerCase();
+      // Unnamed products cannot safely share a mapping.
+      const key = !name
         ? this.issueKey(issue)
         : JSON.stringify([issue.importId, name]);
       const group = groups.get(key) ?? { key, issues: [] };

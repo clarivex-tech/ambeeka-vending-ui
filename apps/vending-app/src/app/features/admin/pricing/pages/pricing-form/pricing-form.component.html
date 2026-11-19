@@ -16,6 +16,7 @@
       }
 
       <div class="pricing-form__grid">
+        @if (!isEditMode) {
         <div class="form-field">
           <label for="systemProductId">System product ID</label>
           <input
@@ -35,6 +36,7 @@
             </small>
           }
         </div>
+        }
 
         <div class="form-field">
           <label for="systemProductName">System product name</label>

@@ -13,7 +13,8 @@ describe('ImportProcessingComponent product groups', () => {
     return {
       importId, sourceRowNumber: row, transactionId: `transaction-${row}`,
       machineName: 'Machine', machineSettlementTime: '2026-11-05T12:00:00Z',
-      settlementValue: 1.5, productSelectionInfo: name, productAlias: null,
+      settlementValue: 1.5, productSelectionInfo: name,
+      productAlias: name?.split('(')[0].trim() ?? null,
       reason: name ? 'AliasNotFound' : 'MissingProductName', suggestedProducts: [],
     };
   }
@@ -54,6 +55,16 @@ describe('ImportProcessingComponent product groups', () => {
     expect(component.groupSettlement(component.issueGroups()[0])).toBe(3);
   });
 
+  it('groups same displayed product names despite different selection details', () => {
+    setReview([
+      issue(188, 'Miss Vickies Chips 1.375 oz (selection A)'),
+      issue(229, 'Miss Vickies Chips 1.375 oz (selection B)'),
+    ]);
+    component.readOnlyView.set(true);
+    expect(component.issueGroups().length).toBe(1);
+    expect(component.issueGroups()[0].issues.map((row) => row.sourceRowNumber)).toEqual([188, 229]);
+  });
+
   it('submits one resolution per transaction after a single product selection', () => {
     setReview(Array.from({ length: 6 }, (_, index) => issue(index + 1, 'Hot Pocket Pep Pizza')));
     expect(component.canCalculate()).toBeFalse();
@@ -79,13 +90,19 @@ describe('ImportProcessingComponent product groups', () => {
   });
 
   it('does not present partial decisions as resolved and preserves saved per-row decisions', () => {
-    setReview([issue(1, 'Pizza'), issue(2, 'pizza')]);
-    component.resolutions.set({ 'import-1:1': { sourceRowNumber: 1, action: 'Ignore' } });
-    expect(component.groupResolution(component.issueGroups()[0])).toBeUndefined();
-    expect(component.groupHasDecision(component.issueGroups()[0])).toBeTrue();
+    setReview([issue(1, 'Pizza (selection A)'), issue(2, 'pizza (selection B)')]);
+    component.resolutions.set({
+      'import-1:1': { sourceRowNumber: 1, action: 'Ignore' },
+      'import-1:2': { sourceRowNumber: 2, action: 'Map', productId: 'pizza' },
+    });
     component.readOnlyView.set(true);
-    expect(component.issueGroups().length).toBe(2);
-    expect(component.resolution(component.issueGroups()[0].issues[0])?.action).toBe('Ignore');
-    expect(component.resolution(component.issueGroups()[1].issues[0])).toBeUndefined();
+    const group = component.issueGroups()[0];
+    expect(component.issueGroups().length).toBe(1);
+    expect(group.issues.map((row) => component.savedDecisionLabel(row))).toEqual([
+      'Ignored in saved calculation',
+      'Mapped to Pizza',
+    ]);
+    expect(component.groupResolution(group)).toBeUndefined();
+    expect(component.groupHasDecision(group)).toBeTrue();
   });
 });
