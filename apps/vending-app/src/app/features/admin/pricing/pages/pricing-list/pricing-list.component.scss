@@ -56,8 +56,16 @@
   box-shadow: var(--shadow-sm);
 }
 
-.pricing-page__actions-heading { text-align: right; }
-.pricing-page__actions { display: flex; justify-content: flex-end; gap: var(--spacing-xs, 0.25rem); }
+.pricing-grid {
+  width: 100%;
+  min-width: 58rem;
+  --ag-font-family: inherit;
+  --ag-font-size: 0.875rem;
+  --ag-border-color: var(--color-border, #dce5e8);
+  --ag-header-background-color: var(--color-surface, #fff);
+  --ag-header-foreground-color: var(--color-text-muted, #60727b);
+  --ag-row-hover-color: color-mix(in srgb, var(--color-primary) 6%, transparent);
+}
 
 .pricing-state {
   padding: var(--spacing-xl, 2rem);
