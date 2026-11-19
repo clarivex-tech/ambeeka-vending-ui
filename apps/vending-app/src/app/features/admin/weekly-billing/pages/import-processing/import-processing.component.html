@@ -181,7 +181,7 @@
         <div class="review-summary">
           <span><strong>{{ pricingReview.transactionsReviewed | number }}</strong> transactions reviewed</span>
           <span><strong>{{ pricingReview.rowsNeedingReview | number }}</strong> rows flagged</span>
-          @if (!readOnlyView()) { <span><strong>{{ issueGroups().length | number }}</strong> product groups</span> }
+          <span><strong>{{ issueGroups().length | number }}</strong> product groups</span>
           <span><strong>{{ readOnlyView() ? (savedResolutionCount() | number) : (resolvedCount() | number) }}</strong> {{ readOnlyView() ? 'saved decisions' : 'decisions entered' }}</span>
         </div>
 
@@ -206,7 +206,7 @@
                       {{ decision.action === 'Ignore' ? 'Ignored' : 'Mapped' }}
                     </span>
                   } @else {
-                    <span class="decision-status decision-status--pending">{{ groupHasDecision(group) ? 'Review group decision' : 'Decision required' }}</span>
+                    <span class="decision-status decision-status--pending">{{ groupHasDecision(group) ? (readOnlyView() ? 'Mixed row decisions' : 'Review group decision') : 'Decision required' }}</span>
                   }
                   <i class="pi pi-chevron-down issue-card__chevron" aria-hidden="true"></i>
                 </summary>
@@ -240,7 +240,11 @@
                     }
                   </div>
                   } @else {
-                    <p class="saved-decision"><i class="pi pi-lock" aria-hidden="true"></i> {{ savedDecisionLabel(issue) }}</p>
+                    <ul aria-label="Saved decision for each transaction">
+                      @for (savedIssue of group.issues; track issueKey(savedIssue)) {
+                        <li>Row {{ savedIssue.sourceRowNumber | number }}: {{ savedDecisionLabel(savedIssue) }}</li>
+                      }
+                    </ul>
                   }
                 </div>
               </details>
